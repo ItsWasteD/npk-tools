@@ -71,8 +71,6 @@ function parsePositionGroup(positionGroup) {
 		// 1. CONTENT
 		const positionContent = $(position).find("> .npk-position-content");
 
-		positionObj.children = positionContent.children().length;
-
 		// 1.1 LEVELCODE
 		const levelcode = positionContent.find("> .npk-position-levelcode");
 
@@ -113,11 +111,11 @@ function parsePositionGroup(positionGroup) {
 				text: products.text().replace(WHITESPACE_REGEXP, "") || null,
 				children: products.children().length,
 			},
+			...(variables.length != null && { variables: [] }),
 			children: name.children().length,
 		};
 
 		if (variables.length != null) {
-			positionObj.name.variables = [];
 			variables
 				.find(" > .npk-position-variable")
 				.each((index, variable) => {
@@ -183,10 +181,12 @@ function parsePositionGroup(positionGroup) {
 			positionObj.positions = parsePositionGroup(positionGroup);
 		}
 
+		positionObj.children = positionContent.children().length;
+
 		positionArr.push(positionObj);
 
 		// Break out of loop after first element
-		return false;
+		//return false;
 	});
 
 	return positionArr;
