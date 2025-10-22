@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { IMPORTANT_CHAPTERS, ALL_CHAPTERS } from "../constants.js";
+//import { IMPORTANT_CHAPTERS, ALL_CHAPTERS } from "../constants.js";
 import fs from "fs";
 import util from "util";
 import * as cheerio from "cheerio";
@@ -9,7 +9,7 @@ const WHITESPACE_REGEXP = /^\s+|\s+$/gm;
 let $ = null;
 
 let data = [];
-for (const chapterNr of ALL_CHAPTERS) {
+for (const chapterNr of [102]) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 	break;
@@ -30,9 +30,17 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter.find("> .npk-chapter-header > .npk-position-levelcode").text();
-	const headerName = chapter.find("> .npk-chapter-header > .npk-position-name").text();
-	const headerVersion = chapter.find("> .npk-chapter-header > .npk-position-name > .npk-position-version").text();
+	const headerLevelCode = chapter
+		.find("> .npk-chapter-header > .npk-position-levelcode")
+		.text();
+	const headerName = chapter
+		.find("> .npk-chapter-header > .npk-position-name")
+		.text();
+	const headerVersion = chapter
+		.find(
+			"> .npk-chapter-header > .npk-position-name > .npk-position-version"
+		)
+		.text();
 
 	const obj = {
 		levelCode: headerLevelCode.replace(WHITESPACE_REGEXP, ""),
@@ -63,8 +71,6 @@ function parsePositionGroup(positionGroup) {
 		// 1. CONTENT
 		const positionContent = $(position).find("> .npk-position-content");
 
-		positionObj.children = positionContent.contents().html();
-
 		// 1.1 LEVELCODE
 		const levelcode = positionContent.find("> .npk-position-levelcode");
 
@@ -72,38 +78,84 @@ function parsePositionGroup(positionGroup) {
 			main: levelcode.find("> .main-position").text().trim(),
 			sub: levelcode.find("> .sub-position").text().trim(),
 			title: levelcode.find("> .sub-position").prop("title"),
-			children: levelcode.contents().html(),
 		};
 
 		// 1.2 NAME
 		const name = positionContent.find("> .npk-position-name");
 
+		// 1.2.1 TEXT
+		const text = name.find("> .npk-position-text");
+
+		// 1.2.2 PRODUCTS
+		const products = name.find("> .npk-position-products");
+
+		// 1.2.3 VARIABLES
+		const variables = name.find("> .npk-position-variables");
+
 		positionObj.name = {
 			text: {
-				title: name.find("> .npk-position-text > .title").text().replace(WHITESPACE_REGEXP, ""),
-				body: name.find("> .npk-position-text > .body").text().replace(WHITESPACE_REGEXP, ""),
+				title: text
+					.find("> .title")
+					.text()
+					.replace(WHITESPACE_REGEXP, "")
+					.replace(/[\n\r]/g, " "),
+				body:
+					text
+						.find("> .body")
+						.text()
+						.replace(WHITESPACE_REGEXP, "")
+						.replace(/[\n\r]/g, " ") || null,
+				children: text.children().length,
 			},
-			products: name.find("> .npk-position-products").text().trim(),
-			variables: [],
-			children: name.contents().html(),
+			products: {
+				text: products.text().replace(WHITESPACE_REGEXP, "") || null,
+				children: products.children().length,
+			},
+			...(variables.length != null && { variables: [] }),
+			children: name.children().length,
 		};
 
-		name.find("> .npk-position-variables > .npk-position-variable").each((index, variable) => {
-			positionObj.name.variables.push({
-				levelcode: $(variable).find("> .npk-variable-levelcode").text().replace(WHITESPACE_REGEXP, ""),
-				name: $(variable).find("> .npk-variable-name").text().replace(WHITESPACE_REGEXP, ""),
-				products: $(variable).find("> .npk-variable-products").text().replace(WHITESPACE_REGEXP, ""),
-				group: $(variable).find("> .npk-variable-group").text().replace(WHITESPACE_REGEXP, ""),
-				eco: $(variable).find("> .npk-variable-eco").text().replace(WHITESPACE_REGEXP, ""),
-			});
-		});
+		if (variables.length != null) {
+			variables
+				.find(" > .npk-position-variable")
+				.each((index, variable) => {
+					positionObj.name.variables.push({
+						levelcode:
+							$(variable)
+								.find("> .npk-variable-levelcode")
+								.text()
+								.replace(WHITESPACE_REGEXP, "") || null,
+						name:
+							$(variable)
+								.find("> .npk-variable-name")
+								.text()
+								.replace(WHITESPACE_REGEXP, "") || null,
+						products:
+							$(variable)
+								.find("> .npk-variable-products")
+								.text()
+								.replace(WHITESPACE_REGEXP, "") || null,
+						group:
+							$(variable)
+								.find("> .npk-variable-group")
+								.text()
+								.replace(WHITESPACE_REGEXP, "") || null,
+						eco:
+							$(variable)
+								.find("> .npk-variable-eco")
+								.text()
+								.replace(WHITESPACE_REGEXP, "") || null,
+						children: $(variable).children().length,
+					});
+				});
+		}
 
 		// 1.3 UNIT
 		const unit = positionContent.find("> .npk-position-unit");
 
 		positionObj.unit = {
 			text: unit.text().replace(WHITESPACE_REGEXP, "") || null,
-			children: unit.contents().html(),
+			children: unit.children().length,
 		};
 
 		// 1.4 ECO
@@ -111,7 +163,7 @@ function parsePositionGroup(positionGroup) {
 
 		positionObj.eco = {
 			text: eco.text().replace(WHITESPACE_REGEXP, "") || null,
-			children: eco.contents().html(),
+			children: eco.children().length,
 		};
 
 		// 1.5 MEDIA
@@ -119,18 +171,22 @@ function parsePositionGroup(positionGroup) {
 
 		positionObj.media = {
 			text: media.text().replace(WHITESPACE_REGEXP, "") || null,
-			children: media.contents().html(),
+			children: media.children().length,
 		};
 
 		//2. POSITIONGROUP
 		const positionGroup = $(position).find("> .npk-positiongroup");
 		// Recursive call
-		positionObj.positions = parsePositionGroup(positionGroup);
+		if (positionGroup.length != 0) {
+			positionObj.positions = parsePositionGroup(positionGroup);
+		}
+
+		positionObj.children = positionContent.children().length;
 
 		positionArr.push(positionObj);
 
 		// Break out of loop after first element
-		return false;
+		//return false;
 	});
 
 	return positionArr;
