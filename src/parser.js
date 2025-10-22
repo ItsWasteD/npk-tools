@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-//import { IMPORTANT_CHAPTERS, ALL_CHAPTERS } from "../constants.js";
+import { IMPORTANT_CHAPTERS, ALL_CHAPTERS } from "../constants.js";
 import fs from "fs";
 import util from "util";
 import * as cheerio from "cheerio";
@@ -9,10 +9,29 @@ const WHITESPACE_REGEXP = /^\s+|\s+$/gm;
 let $ = null;
 
 let data = [];
-for (const chapterNr of [102]) {
+for (const chapterNr of ALL_CHAPTERS) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
+
+	console.log(parsed.levelCode);
+	printPositions(parsed.positions);
+
 	break;
+}
+
+function printPositions(positions, level = 1) {
+	const indent = "  ".repeat(level);
+	for (const pos of positions) {
+		console.log(`${indent}${pos.levelcode?.title || ""}`);
+		if (pos.name.variables && pos.name.variables.length) {
+			for (const v of pos.name.variables) {
+				console.log(`${indent}  ${v.levelcode} - ${v.name}`);
+			}
+		}
+		if (pos.positions && pos.positions.length) {
+			printPositions(pos.positions, level + 1);
+		}
+	}
 }
 
 //const pretty= JSON.stringify(data, null, 2)
@@ -30,22 +49,20 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter
-		.find("> .npk-chapter-header > .npk-position-levelcode")
-		.text();
-	const headerName = chapter
-		.find("> .npk-chapter-header > .npk-position-name")
-		.text();
-	const headerVersion = chapter
-		.find(
-			"> .npk-chapter-header > .npk-position-name > .npk-position-version"
-		)
-		.text();
+	const headerLevelCode = chapter.find(
+		"> .npk-chapter-header > .npk-position-levelcode"
+	);
+	const headerName = chapter.find(
+		"> .npk-chapter-header > .npk-position-name"
+	);
+	const headerVersion = chapter.find(
+		"> .npk-chapter-header > .npk-position-name > .npk-position-version"
+	);
 
 	const obj = {
-		levelCode: headerLevelCode.replace(WHITESPACE_REGEXP, ""),
-		name: headerName.replace(WHITESPACE_REGEXP, ""),
-		version: headerVersion.replace(WHITESPACE_REGEXP, ""),
+		levelCode: getText(headerLevelCode),
+		name: getText(headerName),
+		version: getText(headerVersion),
 	};
 
 	/* ##############################################
@@ -94,57 +111,34 @@ function parsePositionGroup(positionGroup) {
 
 		positionObj.name = {
 			text: {
-				title: text
-					.find("> .title")
-					.text()
-					.replace(WHITESPACE_REGEXP, "")
-					.replace(/[\n\r]/g, " "),
-				body:
-					text
-						.find("> .body")
-						.text()
-						.replace(WHITESPACE_REGEXP, "")
-						.replace(/[\n\r]/g, " ") || null,
+				title: getText(text, "> .title"),
+				body: getText(text, "> .body"),
 				children: text.children().length,
 			},
 			products: {
-				text: products.text().replace(WHITESPACE_REGEXP, "") || null,
+				text: getText(products),
 				children: products.children().length,
 			},
-			...(variables.length != null && { variables: [] }),
+			...(variables.length && { variables: [] }),
 			children: name.children().length,
 		};
 
-		if (variables.length != null) {
+		if (variables.length) {
 			variables
 				.find(" > .npk-position-variable")
 				.each((index, variable) => {
 					positionObj.name.variables.push({
-						levelcode:
-							$(variable)
-								.find("> .npk-variable-levelcode")
-								.text()
-								.replace(WHITESPACE_REGEXP, "") || null,
-						name:
-							$(variable)
-								.find("> .npk-variable-name")
-								.text()
-								.replace(WHITESPACE_REGEXP, "") || null,
-						products:
-							$(variable)
-								.find("> .npk-variable-products")
-								.text()
-								.replace(WHITESPACE_REGEXP, "") || null,
-						group:
-							$(variable)
-								.find("> .npk-variable-group")
-								.text()
-								.replace(WHITESPACE_REGEXP, "") || null,
-						eco:
-							$(variable)
-								.find("> .npk-variable-eco")
-								.text()
-								.replace(WHITESPACE_REGEXP, "") || null,
+						levelcode: getText(
+							$(variable),
+							"> .npk-variable-levelcode"
+						),
+						name: getText($(variable), "> .npk-variable-name"),
+						products: getText(
+							$(variable),
+							"> .npk-variable-products"
+						),
+						group: getText($(variable), "> .npk-variable-group"),
+						eco: getText($(variable), "> .npk-variable-eco"),
 						children: $(variable).children().length,
 					});
 				});
@@ -154,7 +148,7 @@ function parsePositionGroup(positionGroup) {
 		const unit = positionContent.find("> .npk-position-unit");
 
 		positionObj.unit = {
-			text: unit.text().replace(WHITESPACE_REGEXP, "") || null,
+			text: getText(unit),
 			children: unit.children().length,
 		};
 
@@ -162,7 +156,7 @@ function parsePositionGroup(positionGroup) {
 		const eco = positionContent.find("> .npk-position-eco");
 
 		positionObj.eco = {
-			text: eco.text().replace(WHITESPACE_REGEXP, "") || null,
+			text: getText(eco),
 			children: eco.children().length,
 		};
 
@@ -170,7 +164,7 @@ function parsePositionGroup(positionGroup) {
 		const media = positionContent.find("> .npk-position-media");
 
 		positionObj.media = {
-			text: media.text().replace(WHITESPACE_REGEXP, "") || null,
+			text: getText(media),
 			children: media.children().length,
 		};
 
@@ -190,4 +184,14 @@ function parsePositionGroup(positionGroup) {
 	});
 
 	return positionArr;
+}
+
+function getText(cheerioEl, selector) {
+	const el = selector ? cheerioEl.find(selector) : cheerioEl;
+	return el.length
+		? el
+				.text()
+				.replace(WHITESPACE_REGEXP, "")
+				.replace(/[\n\r]/g, " ")
+		: null;
 }
