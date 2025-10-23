@@ -5,24 +5,27 @@ import util from "util";
 import * as cheerio from "cheerio";
 
 const WHITESPACE_REGEXP = /^\s+|\s+$/gm;
+const IMAGE_REGEXP = /media\/([0-9a-fA-F-]{36})/;
 
 let $ = null;
 
 let data = [];
-for (const chapterNr of ALL_CHAPTERS) {
+for (const chapterNr of [102, 113]) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 
 	console.log(parsed.levelCode);
 	printPositions(parsed.positions);
-
-	break;
 }
 
 function printPositions(positions, level = 1) {
 	const indent = "  ".repeat(level);
 	for (const pos of positions) {
-		console.log(`${indent}${pos.levelcode?.title || ""} ${pos.name.text.title || ""}`);
+		console.log(
+			`${indent}${pos.levelcode?.title || ""} ${
+				pos.name.text.title || ""
+			}`
+		);
 		if (pos.name.variables && pos.name.variables.length) {
 			for (const v of pos.name.variables) {
 				console.log(`${indent}  ${v.levelcode} - ${v.name}`);
@@ -34,8 +37,8 @@ function printPositions(positions, level = 1) {
 	}
 }
 
-//const pretty= JSON.stringify(data, null, 2)
-const pretty = util.inspect(data, { depth: null, colors: false });
+const pretty = JSON.stringify(data, null, 2);
+//const pretty = util.inspect(data, { depth: null, colors: false });
 fs.writeFileSync("output.json", pretty, "utf8");
 
 function parseFile(chapterNr) {
@@ -49,9 +52,15 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter.find("> .npk-chapter-header > .npk-position-levelcode");
-	const headerName = chapter.find("> .npk-chapter-header > .npk-position-name");
-	const headerVersion = chapter.find("> .npk-chapter-header > .npk-position-name > .npk-position-version");
+	const headerLevelCode = chapter.find(
+		"> .npk-chapter-header > .npk-position-levelcode"
+	);
+	const headerName = chapter.find(
+		"> .npk-chapter-header > .npk-position-name"
+	);
+	const headerVersion = chapter.find(
+		"> .npk-chapter-header > .npk-position-name > .npk-position-version"
+	);
 
 	const obj = {
 		levelCode: getText(headerLevelCode),
@@ -100,6 +109,9 @@ function parsePositionGroup(positionGroup) {
 		// 1.2.2 PRODUCTS
 		const products = name.find("> .npk-position-products");
 
+		// 1.2.2.1 ITEMS
+		const productItems = products.find("> npk-position-products-items");
+
 		// 1.2.3 VARIABLES
 		const variables = name.find("> .npk-position-variables");
 
@@ -110,24 +122,41 @@ function parsePositionGroup(positionGroup) {
 				children: text.children().length,
 			},
 			products: {
-				text: getText(products),
+				...(productItems.length && { items: [] }),
 				children: products.children().length,
 			},
 			...(variables.length && { variables: [] }),
 			children: name.children().length,
 		};
 
-		if (variables.length) {
-			variables.find(" > .npk-position-variable").each((index, variable) => {
-				positionObj.name.variables.push({
-					levelcode: getText($(variable), "> .npk-variable-levelcode"),
-					name: getText($(variable), "> .npk-variable-name"),
-					products: getText($(variable), "> .npk-variable-products"),
-					group: getText($(variable), "> .npk-variable-group"),
-					eco: getText($(variable), "> .npk-variable-eco"),
-					children: $(variable).children().length,
+		if (productItems.length) {
+			productItems.find("> prd-product").each((index, item) => {
+				positionObj.name.items.push({
+					icon: getText($(item), "> prd-icon"),
+					label: getText($(item), "> prd-label"),
 				});
 			});
+		}
+
+		if (variables.length) {
+			variables
+				.find(" > .npk-position-variable")
+				.each((index, variable) => {
+					positionObj.name.variables.push({
+						levelcode: getText(
+							$(variable),
+							"> .npk-variable-levelcode"
+						),
+						name: getText($(variable), "> .npk-variable-name"),
+						products: getText(
+							$(variable),
+							"> .npk-variable-products"
+						),
+						group: getText($(variable), "> .npk-variable-group"),
+						eco: getText($(variable), "> .npk-variable-eco"),
+						children: $(variable).children().length,
+					});
+				});
 		}
 
 		// 1.3 UNIT
@@ -149,10 +178,23 @@ function parsePositionGroup(positionGroup) {
 		// 1.5 MEDIA
 		const media = positionContent.find("> .npk-position-media");
 
+		const mediaItems = media.find("> .npk-position-media-item");
+
 		positionObj.media = {
-			text: getText(media),
+			...(mediaItems.length && { items: [] }),
 			children: media.children().length,
 		};
+
+		if (mediaItems.length) {
+			mediaItems.each((index, item) => {
+				positionObj.media.items.push({
+					imageUuid: $(item)
+						.find("> img")
+						.attr("src")
+						.match(IMAGE_REGEXP)[1],
+				});
+			});
+		}
 
 		//2. POSITIONGROUP
 		const positionGroup = $(position).find("> .npk-positiongroup");
