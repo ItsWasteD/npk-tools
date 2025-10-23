@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>NPK-Tool</title>
+		<script src="lib/jsonview.js"></script>
+	</head>
+	<body>
+		<div class="tree"></div>
+		<script type="text/javascript">
+			fetch("../output.json").then(async (res) => {
+				const text = await res.text();
+
+				const data = JSON.parse(text);
+				const tree = jsonview.create(data);
+
+				jsonview.render(tree, document.querySelector(".tree"));
+			});
+		</script>
+	</body>
+</html>

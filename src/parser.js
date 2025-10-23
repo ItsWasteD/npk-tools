@@ -22,7 +22,7 @@ for (const chapterNr of ALL_CHAPTERS) {
 function printPositions(positions, level = 1) {
 	const indent = "  ".repeat(level);
 	for (const pos of positions) {
-		console.log(`${indent}${pos.levelcode?.title || ""}`);
+		console.log(`${indent}${pos.levelcode?.title || ""} ${pos.name.text.title || ""}`);
 		if (pos.name.variables && pos.name.variables.length) {
 			for (const v of pos.name.variables) {
 				console.log(`${indent}  ${v.levelcode} - ${v.name}`);
@@ -49,15 +49,9 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter.find(
-		"> .npk-chapter-header > .npk-position-levelcode"
-	);
-	const headerName = chapter.find(
-		"> .npk-chapter-header > .npk-position-name"
-	);
-	const headerVersion = chapter.find(
-		"> .npk-chapter-header > .npk-position-name > .npk-position-version"
-	);
+	const headerLevelCode = chapter.find("> .npk-chapter-header > .npk-position-levelcode");
+	const headerName = chapter.find("> .npk-chapter-header > .npk-position-name");
+	const headerVersion = chapter.find("> .npk-chapter-header > .npk-position-name > .npk-position-version");
 
 	const obj = {
 		levelCode: getText(headerLevelCode),
@@ -124,24 +118,16 @@ function parsePositionGroup(positionGroup) {
 		};
 
 		if (variables.length) {
-			variables
-				.find(" > .npk-position-variable")
-				.each((index, variable) => {
-					positionObj.name.variables.push({
-						levelcode: getText(
-							$(variable),
-							"> .npk-variable-levelcode"
-						),
-						name: getText($(variable), "> .npk-variable-name"),
-						products: getText(
-							$(variable),
-							"> .npk-variable-products"
-						),
-						group: getText($(variable), "> .npk-variable-group"),
-						eco: getText($(variable), "> .npk-variable-eco"),
-						children: $(variable).children().length,
-					});
+			variables.find(" > .npk-position-variable").each((index, variable) => {
+				positionObj.name.variables.push({
+					levelcode: getText($(variable), "> .npk-variable-levelcode"),
+					name: getText($(variable), "> .npk-variable-name"),
+					products: getText($(variable), "> .npk-variable-products"),
+					group: getText($(variable), "> .npk-variable-group"),
+					eco: getText($(variable), "> .npk-variable-eco"),
+					children: $(variable).children().length,
 				});
+			});
 		}
 
 		// 1.3 UNIT
