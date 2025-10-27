@@ -4,19 +4,63 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>NPK-Tool</title>
-		<script src="lib/jsonview.js"></script>
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+			integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
 	</head>
-	<body>
-		<div class="tree"></div>
-		<script type="text/javascript">
-			fetch("../output.json").then(async (res) => {
-				const text = await res.text();
+	<body class="text-bg-dark">
+		<script>
+			const CHAPTER_NUMBERS = [113];
 
-				const data = JSON.parse(text);
-				const tree = jsonview.create(data);
+			let chapters = [];
 
-				jsonview.render(tree, document.querySelector(".tree"));
+			$(async () => {
+				await $.getJSON(`data/data.json`, (data) =>
+					chapters.push(...data)
+				);
+
+				chapters.forEach((chapter) => {
+					console.log(chapter, Object.keys(chapter));
+					$("table tbody").append(
+						`<tr><td>${chapter.levelCode}</td><td>${chapter.name}</td></tr>`
+					);
+				});
 			});
 		</script>
+		<div class="container-fluid">
+			<h1 class="display-2 text-center">NPK-Tool</h1>
+			<main class="w-75 mx-auto">
+				<table
+					class="table table-dark table-striped table-bordered table-responsive rounded-3"
+				>
+					<thead>
+						<tr>
+							<th>NPK Kapitel</th>
+							<th>Titel</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Test</td>
+							<td>Test</td>
+						</tr>
+					</tbody>
+				</table>
+			</main>
+		</div>
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+			integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
+			crossorigin="anonymous"
+		></script>
 	</body>
 </html>
