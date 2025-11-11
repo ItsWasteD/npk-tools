@@ -23,21 +23,63 @@
 
 			let chapters = [];
 
+			window.onhashchange = () => {
+				const chapterNr = location.hash.replace("#", "");
+				displayChapter(chapterNr);
+			};
+
 			$(async () => {
+				$("#chapter").hide();
+
 				await $.getJSON(`data/data.json`, (data) =>
 					chapters.push(...data)
 				);
 
+				displayChapters();
+			});
+
+			function displayChapters() {
 				chapters.forEach((chapter) => {
-					console.log(chapter, Object.keys(chapter));
 					$("table tbody").append(
-						`<tr><td>${chapter.levelCode}</td><td>${chapter.name}</td></tr>`
+						`<tr class='chapter-row' role='button' onclick='(() => location.hash = ${chapter.levelCode})()'><td>${chapter.levelCode}</td><td>${chapter.name}</td></tr></a>`
 					);
 				});
-			});
+			}
+
+			function displayChapter(chapterNr) {
+				if (chapterNr === "") {
+					$("table").show();
+					$("#chapter").hide().empty();
+
+					return;
+				}
+
+				const chapter = chapters.find(
+					(chapter) => chapter.levelCode == chapterNr
+				);
+
+				if (chapter) {
+					$("table").hide();
+					$("#chapter")
+						.append(
+							`<h3 class='display-6'>${chapter.levelCode} - ${chapter.name}</h2>`
+						)
+						.append(
+							"<div class='accordion' id='accordion'><div class='accordion-item'><h4 class='accordion-header'><button class='accordion-button' type='button' data-bs-toggle='collapse' data-bs-target='#collapseOne' aria-controls='collapseOne'>Accordion Item #1</button></h4></div></div>"
+						)
+						.show();
+				} else {
+					console.error(`Chapter ${chapterNr} not found.`);
+				}
+			}
 		</script>
 		<div class="container-fluid">
-			<h1 class="display-2 text-center">NPK-Tool</h1>
+			<h1
+				class="display-2 text-center"
+				onclick="(() => location.hash = '')()"
+			>
+				NPK-Tool
+			</h1>
 			<main class="w-75 mx-auto">
 				<table
 					class="table table-dark table-striped table-bordered table-responsive rounded-3"
@@ -49,12 +91,13 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>Test</td>
-							<td>Test</td>
-						</tr>
+						<tr></tr>
 					</tbody>
 				</table>
+				<div
+					id="chapter"
+					class="container-fluid border border-white rounded-2 p-2"
+				></div>
 			</main>
 		</div>
 		<script
