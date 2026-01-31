@@ -1,9 +1,18 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import chaptersJson from "../../../data/data.json";
 
 export default function Table() {
 	const navigate = useNavigate();
-	const chapters = (chaptersJson as any[]).map((c) => (
+
+	const [chapters, setChapters] = useState<any[]>([]);
+
+	useEffect(() => {
+		fetch("/npk-tools/data.json")
+			.then((res) => res.json())
+			.then(setChapters);
+	}, []);
+
+	const chaptersView = chapters.map((c) => (
 		<tr
 			key={c.levelCode}
 			onClick={() => navigate(`/chapters/${c.levelCode}`)}
@@ -22,7 +31,7 @@ export default function Table() {
 						<th>Titel</th>
 					</tr>
 				</thead>
-				<tbody>{chapters}</tbody>
+				<tbody>{chaptersView}</tbody>
 			</table>
 		</main>
 	);
