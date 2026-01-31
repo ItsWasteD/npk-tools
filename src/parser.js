@@ -1,8 +1,12 @@
 /* eslint-disable no-unused-vars */
 import { IMPORTANT_CHAPTERS, ALL_CHAPTERS } from "../constants.js";
 import fs from "fs";
-import util from "util";
 import * as cheerio from "cheerio";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const WHITESPACE_REGEXP = /^\s+|\s+$/gm;
 const IMAGE_REGEXP = /media\/([0-9a-fA-F-]{36})/;
@@ -10,22 +14,34 @@ const IMAGE_REGEXP = /media\/([0-9a-fA-F-]{36})/;
 let $ = null;
 
 let data = [];
-for (const chapterNr of [102, 113]) {
+let isFirst = true;
+
+const filePath = path.join(__dirname, "../public/data/chapters.json");
+fs.mkdirSync(path.dirname(filePath), { recursive: true });
+const stream = fs.createWriteStream(filePath, { flags: "a" });
+stream.write("[\n");
+for (const chapterNr of ALL_CHAPTERS) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 
-	console.log(parsed.levelCode);
-	printPositions(parsed.positions);
+	console.log(chapterNr);
+	//printPositions(parsed.positions);
+
+	const pretty = JSON.stringify(parsed, null, 2);
+	//const pretty = util.inspect(data, { depth: null, colors: false });
+
+	if (!isFirst) ",\n";
+	else isFirst = false;
+
+	stream.write(pretty);
 }
+stream.write("]\n");
+stream.end();
 
 function printPositions(positions, level = 1) {
 	const indent = "  ".repeat(level);
 	for (const pos of positions) {
-		console.log(
-			`${indent}${pos.levelcode?.title || ""} ${
-				pos.name.text.title || ""
-			}`
-		);
+		console.log(`${indent}${pos.levelcode?.title || ""} ${pos.name.text.title || ""}`);
 		if (pos.name.variables && pos.name.variables.length) {
 			for (const v of pos.name.variables) {
 				console.log(`${indent}  ${v.levelcode} - ${v.name}`);
@@ -36,10 +52,6 @@ function printPositions(positions, level = 1) {
 		}
 	}
 }
-
-const pretty = JSON.stringify(data, null, 2);
-//const pretty = util.inspect(data, { depth: null, colors: false });
-fs.writeFileSync("output.json", pretty, "utf8");
 
 function parseFile(chapterNr) {
 	const html = fs.readFileSync(`./data/${chapterNr}.html`);
@@ -52,15 +64,9 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter.find(
-		"> .npk-chapter-header > .npk-position-levelcode"
-	);
-	const headerName = chapter.find(
-		"> .npk-chapter-header > .npk-position-name"
-	);
-	const headerVersion = chapter.find(
-		"> .npk-chapter-header > .npk-position-name > .npk-position-version"
-	);
+	const headerLevelCode = chapter.find("> .npk-chapter-header > .npk-position-levelcode");
+	const headerName = chapter.find("> .npk-chapter-header > .npk-position-name");
+	const headerVersion = chapter.find("> .npk-chapter-header > .npk-position-name > .npk-position-version");
 
 	const obj = {
 		levelCode: getText(headerLevelCode),
@@ -139,24 +145,16 @@ function parsePositionGroup(positionGroup) {
 		}
 
 		if (variables.length) {
-			variables
-				.find(" > .npk-position-variable")
-				.each((index, variable) => {
-					positionObj.name.variables.push({
-						levelcode: getText(
-							$(variable),
-							"> .npk-variable-levelcode"
-						),
-						name: getText($(variable), "> .npk-variable-name"),
-						products: getText(
-							$(variable),
-							"> .npk-variable-products"
-						),
-						group: getText($(variable), "> .npk-variable-group"),
-						eco: getText($(variable), "> .npk-variable-eco"),
-						children: $(variable).children().length,
-					});
+			variables.find(" > .npk-position-variable").each((index, variable) => {
+				positionObj.name.variables.push({
+					levelcode: getText($(variable), "> .npk-variable-levelcode"),
+					name: getText($(variable), "> .npk-variable-name"),
+					products: getText($(variable), "> .npk-variable-products"),
+					group: getText($(variable), "> .npk-variable-group"),
+					eco: getText($(variable), "> .npk-variable-eco"),
+					children: $(variable).children().length,
 				});
+			});
 		}
 
 		// 1.3 UNIT
@@ -188,10 +186,7 @@ function parsePositionGroup(positionGroup) {
 		if (mediaItems.length) {
 			mediaItems.each((index, item) => {
 				positionObj.media.items.push({
-					imageUuid: $(item)
-						.find("> img")
-						.attr("src")
-						.match(IMAGE_REGEXP)[1],
+					imageUuid: $(item).find("> img").attr("src").match(IMAGE_REGEXP)[1],
 				});
 			});
 		}
