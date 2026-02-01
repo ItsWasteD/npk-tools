@@ -9,8 +9,7 @@ export function NpkNode({ node, level = 0 }: NpkNodeProps) {
 	const title = getLevelCode(node);
 	const name = getTitle(node);
 
-	const hasChildren =
-		Array.isArray(node.positions) && node.positions.length > 0;
+	const hasPositions = Array.isArray(node.positions) && node.positions.length > 0;
 
 	return (
 		<div style={{ marginLeft: level * 16 }}>
@@ -19,13 +18,9 @@ export function NpkNode({ node, level = 0 }: NpkNodeProps) {
 				{name && ` – ${name}`}
 			</div>
 
-			{hasChildren &&
+			{hasPositions &&
 				node.positions.map((child: any, idx: number) => (
-					<NpkNode
-						key={`${getLevelCode(child)}-${idx}`}
-						node={child}
-						level={level + 1}
-					/>
+					<NpkNode key={`${getLevelCode(child)}-${idx}`} node={child} level={level + 1} />
 				))}
 		</div>
 	);

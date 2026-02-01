@@ -20,7 +20,7 @@ const filePath = path.join(__dirname, "../public/data/chapters.json");
 fs.mkdirSync(path.dirname(filePath), { recursive: true });
 const stream = fs.createWriteStream(filePath, { flags: "a" });
 stream.write("[\n");
-for (const chapterNr of ALL_CHAPTERS) {
+for (const chapterNr of [113]) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 
@@ -100,11 +100,7 @@ function parsePositionGroup(positionGroup) {
 		// 1.1 LEVELCODE
 		const levelcode = positionContent.find("> .npk-position-levelcode");
 
-		positionObj.levelcode = {
-			main: levelcode.find("> .main-position").text().trim(),
-			sub: levelcode.find("> .sub-position").text().trim(),
-			title: levelcode.find("> .sub-position").prop("title"),
-		};
+		positionObj.levelcode = levelcode.find("> .sub-position").prop("title");
 
 		// 1.2 NAME
 		const name = positionContent.find("> .npk-position-name");
@@ -112,66 +108,74 @@ function parsePositionGroup(positionGroup) {
 		// 1.2.1 TEXT
 		const text = name.find("> .npk-position-text");
 
-		// 1.2.2 PRODUCTS
+		// 1.2.1.1 TITLE
+
+		// 1.2.1.2 BODY
+		const body = text.find("> .body");
+
+		// 1.2.1.3 ITEMS
+		const textItems = text.find("> .items > .item");
+
+		// 1.2.2 DESCRIPTION
+		const description = name.find("> .npk-position-description");
+
+		// 1.2.3 PRODUCTS
 		const products = name.find("> .npk-position-products");
 
-		// 1.2.2.1 ITEMS
-		const productItems = products.find("> npk-position-products-items");
+		// 1.2.3.1 ITEMS
+		const productItems = products.find("> .npk-position-products-items > .prd-product");
 
-		// 1.2.3 VARIABLES
-		const variables = name.find("> .npk-position-variables");
+		// 1.2.4 VARIABLES
+		const variables = name.find("> .npk-position-variables > .npk-position-variable");
 
 		positionObj.name = {
 			text: {
 				title: getText(text, "> .title"),
-				body: getText(text, "> .body"),
-				children: text.children().length,
+				...(body.length && { body: getText(body) }),
+				...(textItems.length && { items: textItems.map((i, el) => getText($(el))).get() }),
 			},
-			products: {
-				...(productItems.length && { items: [] }),
-				children: products.children().length,
-			},
-			...(variables.length && { variables: [] }),
-			children: name.children().length,
+			...(description.length && {
+				description: {
+					label: getText(description, "> .description-label"),
+					content: getText(description, "> .description-content"),
+				},
+			}),
+			...(productItems.length && {
+				products: productItems
+					.map((i, el) => ({
+						icon: getText($(el), "> .prd-icon"),
+						label: getText($(el), "> .prd-label"),
+					}))
+					.get(),
+			}),
+			...(variables.length && {
+				variables: variables
+					.map((i, el) => ({
+						levelcode: getText($(el), "> .npk-variable-levelcode"),
+						name: getText($(el), "> .npk-variable-name"),
+						products: getText($(el), "> .npk-variable-products"),
+						group: getText($(el), "> .npk-variable-group"),
+						eco: getText($(el), "> .npk-variable-eco"),
+					}))
+					.get(),
+			}),
 		};
-
-		if (productItems.length) {
-			productItems.find("> prd-product").each((index, item) => {
-				positionObj.name.items.push({
-					icon: getText($(item), "> prd-icon"),
-					label: getText($(item), "> prd-label"),
-				});
-			});
-		}
-
-		if (variables.length) {
-			variables.find(" > .npk-position-variable").each((index, variable) => {
-				positionObj.name.variables.push({
-					levelcode: getText($(variable), "> .npk-variable-levelcode"),
-					name: getText($(variable), "> .npk-variable-name"),
-					products: getText($(variable), "> .npk-variable-products"),
-					group: getText($(variable), "> .npk-variable-group"),
-					eco: getText($(variable), "> .npk-variable-eco"),
-					children: $(variable).children().length,
-				});
-			});
-		}
 
 		// 1.3 UNIT
-		const unit = positionContent.find("> .npk-position-unit");
+		const unit = getText(positionContent.find("> .npk-position-unit"));
 
-		positionObj.unit = {
-			text: getText(unit),
-			children: unit.children().length,
-		};
+		unit &&
+			(positionObj.unit = {
+				text: unit,
+			});
 
 		// 1.4 ECO
-		const eco = positionContent.find("> .npk-position-eco");
+		const eco = getText(positionContent.find("> .npk-position-eco"));
 
-		positionObj.eco = {
-			text: getText(eco),
-			children: eco.children().length,
-		};
+		eco &&
+			(positionObj.eco = {
+				text: eco,
+			});
 
 		// 1.5 MEDIA
 		const media = positionContent.find("> .npk-position-media");
@@ -180,7 +184,6 @@ function parsePositionGroup(positionGroup) {
 
 		positionObj.media = {
 			...(mediaItems.length && { items: [] }),
-			children: media.children().length,
 		};
 
 		if (mediaItems.length) {
@@ -198,8 +201,6 @@ function parsePositionGroup(positionGroup) {
 			positionObj.positions = parsePositionGroup(positionGroup);
 		}
 
-		positionObj.children = positionContent.children().length;
-
 		positionArr.push(positionObj);
 
 		// Break out of loop after first element
@@ -216,5 +217,5 @@ function getText(cheerioEl, selector) {
 				.text()
 				.replace(WHITESPACE_REGEXP, "")
 				.replace(/[\n\r]/g, " ")
-		: null;
+		: "";
 }

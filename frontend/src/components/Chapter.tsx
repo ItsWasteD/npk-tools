@@ -11,7 +11,7 @@ export default function Chapter() {
 		fetch("/npk-tools/data.json")
 			.then((res) => res.json())
 			.then((json) => {
-				const chapter = json.filter((el) => el.levelCode == params.cid);
+				const chapter = json.filter((el: any) => el.levelCode == params.cid);
 				setData(chapter);
 				console.log(chapter);
 				setLoading(false);
