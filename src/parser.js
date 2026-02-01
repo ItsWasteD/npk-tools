@@ -164,35 +164,22 @@ function parsePositionGroup(positionGroup) {
 		// 1.3 UNIT
 		const unit = getText(positionContent.find("> .npk-position-unit"));
 
-		unit &&
-			(positionObj.unit = {
-				text: unit,
-			});
+		unit && (positionObj.unit = unit);
 
 		// 1.4 ECO
 		const eco = getText(positionContent.find("> .npk-position-eco"));
 
-		eco &&
-			(positionObj.eco = {
-				text: eco,
-			});
+		eco && (positionObj.eco = eco);
 
 		// 1.5 MEDIA
 		const media = positionContent.find("> .npk-position-media");
 
 		const mediaItems = media.find("> .npk-position-media-item");
 
-		positionObj.media = {
-			...(mediaItems.length && { items: [] }),
-		};
-
-		if (mediaItems.length) {
-			mediaItems.each((index, item) => {
-				positionObj.media.items.push({
-					imageUuid: $(item).find("> img").attr("src").match(IMAGE_REGEXP)[1],
-				});
-			});
-		}
+		mediaItems.length &&
+			(positionObj.media = mediaItems
+				.map((i, el) => $(el).find("> img").attr("src").match(IMAGE_REGEXP)[1])
+				.get());
 
 		//2. POSITIONGROUP
 		const positionGroup = $(position).find("> .npk-positiongroup");

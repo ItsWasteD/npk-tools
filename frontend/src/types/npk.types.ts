@@ -29,17 +29,13 @@ export type NpkName = {
 	variables?: NpkVariable[];
 };
 
-export type NpkUnit = {
-	text: string;
-};
+export type NpkUnit = string;
 
 export type NpkEco = {
 	text: string;
 };
 
-export type NpkMedia = {
-	items?: { imageUuid: string }[];
-};
+export type NpkMedia = string[];
 
 export type NpkPosition = {
 	levelcode: string;
@@ -47,6 +43,7 @@ export type NpkPosition = {
 	unit?: NpkUnit;
 	eco?: NpkEco;
 	media: NpkMedia;
+	positions?: NpkPosition[];
 };
 
 export type NpkRoot = {
