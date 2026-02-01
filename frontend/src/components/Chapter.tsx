@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { NpkNode } from "./NpkNode";
+import NpkChapter from "./NpkChapter";
 
 export default function Chapter() {
 	const params = useParams();
@@ -13,7 +13,6 @@ export default function Chapter() {
 			.then((json) => {
 				const chapter = json.filter((el: any) => el.levelCode == params.cid);
 				setData(chapter);
-				console.log(chapter);
 				setLoading(false);
 			});
 	}, []);
@@ -23,7 +22,7 @@ export default function Chapter() {
 	return (
 		<main className="mx-auto border border-secondary rounded p-3">
 			{data.map((rootNode, idx) => (
-				<NpkNode key={idx} node={rootNode} />
+				<NpkChapter key={idx} node={rootNode} />
 			))}
 		</main>
 	);
