@@ -7,7 +7,7 @@ type Field = {
 	pad?: string;
 };
 
-// Comments correspond to SIA451.01S
+// Header - Comments correspond to SIA451.01S
 const A_RECORD_FIELDS: Field[] = [
 	{ name: "recordart", length: 1, align: "left" }, // A
 	{ name: "erstellungsdatum", length: 6, align: "right" }, // 020525
@@ -28,8 +28,36 @@ const A_RECORD_FIELDS: Field[] = [
 	{ name: "unknown4", length: 7, align: "left" },
 	{ name: "kurzbeschreibung1", length: 56, align: "left" }, // UMB_4557_PFUmbau EFH Pfluger Prisca & Oli000002110
 	{ name: "kurzbeschreibung2", length: 30, align: "left" }, // 2110 BAUMEISTEREARBEITEN
-	{ name: "dokId", length: 70, align: "left" }, // R.Messerli AG       056/4183800         MesserliBAUAD 2009.2.5  (1202)
-];
+	{ name: "dokId", length: 92, align: "left" }, // R.Messerli AG       056/4183800         MesserliBAUAD 2009.2.5  (1202)
+]; // Length: 256
+
+// Sekundärgliederung
+const B_C_RECORD_FIELD: Field[] = [
+	{ name: "recordart", length: 1, align: "left" },
+	{ name: "nummer1", length: 3, align: "left" },
+	{ name: "nummer2", length: 3, align: "left" },
+	{ name: "unknown1", length: 8, align: "left" },
+	{ name: "number3", length: 2, align: "left" },
+	{ name: "kuerzel1", length: 2, align: "left" },
+	{ name: "unknown2", length: 16, align: "left" },
+	{ name: "kuerzel2", length: 3, align: "left" },
+	{ name: "unknown3", length: 3, align: "left" },
+	{ name: "nummer3", length: 1, align: "left" },
+	{ name: "unknown4", length: 1, align: "left" },
+	{ name: "percent", length: 1, align: "left" },
+	{ name: "vorzeichen1", length: 1, align: "left" },
+	{ name: "nummer4", length: 15, align: "left" },
+	{ name: "suffix", length: 1, align: "left" },
+	{ name: "unknown5", length: 13, align: "left" },
+	{ name: "vorzeichen2", length: 1, align: "left" },
+	{ name: "nummer6", length: 6, align: "left" },
+	{ name: "nummer7", length: 4, align: "left" },
+	{ name: "unknown6", length: 7, align: "left" },
+	{ name: "text1", length: 30, align: "left" },
+	{ name: "unknown7", length: 15, align: "left" },
+	{ name: "unknown8", length: 15, align: "left" },
+	{ name: "text2", length: 104, align: "left" },
+]; // Length: 256
 
 const G_RECORD_FIELDS: Field[] = [
 	{ name: "recordart", length: 1, align: "left" },
@@ -58,7 +86,7 @@ const G_RECORD_FIELDS: Field[] = [
 	{ name: "elementcode", length: 6, align: "right" },
 	{ name: "positionstext", length: 30, align: "right" },
 	{ name: "spez_codex", length: 134, align: "right" },
-];
+]; // Length: 256
 
 const Z_RECORD_FIELDS: Field[] = [
 	{ name: "recordart", length: 1, align: "left" },
@@ -72,26 +100,41 @@ const Z_RECORD_FIELDS: Field[] = [
 	{ name: "leer3", length: 4, align: "right" },
 	{ name: "anzahl_records", length: 13, align: "right" },
 	{ name: "leer4", length: 3, align: "left" },
-	{ name: "fortsetzung", length: 1, align: "left" },
+	{ name: "vorzeichen", length: 1, align: "left" },
 	{ name: "datentraegernummer", length: 12, align: "right" },
 	{ name: "version_bezugsdokument", length: 7, align: "right" },
 	{ name: "identifikation_bezugsdokument", length: 41, align: "left" },
+	{ name: "leer5", length: 15, align: "left" },
 	{ name: "firma", length: 30, align: "left" },
-	{ name: "telefonnummer", length: 40, align: "left" },
-];
+	{ name: "telefonnummer", length: 99, align: "left" },
+]; // Length: 256
 
-function pad(value: string | number | undefined, length: number, align: "left" | "right", padChar = " "): string {
+function pad(
+	value: string | number | undefined,
+	length: number,
+	align: "left" | "right",
+	padChar = " ",
+): string {
 	const str = value === undefined ? "" : String(value);
 
 	if (str.length > length) {
 		return str.slice(0, length);
 	}
 
-	return align === "right" ? str.padStart(length, padChar) : str.padEnd(length, padChar);
+	return align === "right"
+		? str.padStart(length, padChar)
+		: str.padEnd(length, padChar);
 }
 
-function buildRecord(fields: Field[], data: Record<string, string | number | undefined>): string {
-	return fields.map((f) => pad(data[f.name], f.length, f.align, f.pad)).join("") + "\r\n";
+function buildRecord(
+	fields: Field[],
+	data: Record<string, string | number | undefined>,
+): string {
+	return (
+		fields
+			.map((f) => pad(data[f.name], f.length, f.align, f.pad))
+			.join("") + "\r\n"
+	);
 }
 
 function write(lines: string[]) {
