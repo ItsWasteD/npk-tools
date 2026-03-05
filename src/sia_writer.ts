@@ -7,29 +7,28 @@ type Field = {
 	pad?: string;
 };
 
+// Comments correspond to SIA451.01S
 const A_RECORD_FIELDS: Field[] = [
 	{ name: "recordart", length: 1, align: "left" }, // A
-	{ name: "erstellungsdatum", length: 6, align: "right" }, // TTMMJJ
-	{ name: "schnittstellenversion", length: 3, align: "right" }, // 451
+	{ name: "erstellungsdatum", length: 6, align: "right" }, // 020525
+	{ name: "schnittstellenversion", length: 3, align: "right" }, // 451-92
 	{ name: "fehlerstufe", length: 1, align: "left" },
 	{ name: "pruefung", length: 1, align: "left" },
-	{ name: "bauherr", length: 6, align: "left" },
-	{ name: "bauherr2", length: 6, align: "left" },
-	{ name: "urheber1", length: 6, align: "left" },
-	{ name: "urheber2", length: 6, align: "left" },
-	{ name: "urheber3", length: 6, align: "left" },
-	{ name: "sprache", length: 1, align: "left" }, // D
-	{ name: "stellung", length: 1, align: "left" }, // A
-	{ name: "dokCode", length: 1, align: "left" }, // B
-	{ name: "status", length: 1, align: "left" }, // C
-	{ name: "vergabe", length: 6, align: "left" },
-	{ name: "hilfsnr", length: 18, align: "left" },
-	{ name: "datentraeger", length: 2, align: "right" },
-	{ name: "dokVersion", length: 2, align: "right" },
-	{ name: "projektId1", length: 6, align: "left" },
-	{ name: "projektId2", length: 6, align: "left" },
-	{ name: "projektname", length: 30, align: "left" },
-	{ name: "special", length: 134, align: "left" },
+	{ name: "unknown1", length: 26, align: "left" },
+	//	{ name: "bauherr", length: 6, align: "left" },
+	//	{ name: "bauherr2", length: 6, align: "left" },
+	//	{ name: "urheber1", length: 6, align: "left" },
+	//	{ name: "urheber2", length: 6, align: "left" },
+	//	{ name: "urheber3", length: 6, align: "left" },
+	{ name: "sprache", length: 2, align: "left" }, // 1_ - Sprachcode
+	{ name: "stellung", length: 1, align: "left" }, // B (Nachtrag) - Stellung zur vorversion
+	{ name: "dokCode", length: 1, align: "left" }, // C (Angebot) - Dokumentenstatus
+	{ name: "unknown3", length: 13, align: "left" },
+	{ name: "dokVersion", length: 16, align: "right" }, // 0000000000000001
+	{ name: "unknown4", length: 7, align: "left" },
+	{ name: "kurzbeschreibung1", length: 56, align: "left" }, // UMB_4557_PFUmbau EFH Pfluger Prisca & Oli000002110
+	{ name: "kurzbeschreibung2", length: 30, align: "left" }, // 2110 BAUMEISTEREARBEITEN
+	{ name: "dokId", length: 70, align: "left" }, // R.Messerli AG       056/4183800         MesserliBAUAD 2009.2.5  (1202)
 ];
 
 const G_RECORD_FIELDS: Field[] = [
@@ -81,32 +80,18 @@ const Z_RECORD_FIELDS: Field[] = [
 	{ name: "telefonnummer", length: 40, align: "left" },
 ];
 
-function pad(
-	value: string | number | undefined,
-	length: number,
-	align: "left" | "right",
-	padChar = " ",
-): string {
+function pad(value: string | number | undefined, length: number, align: "left" | "right", padChar = " "): string {
 	const str = value === undefined ? "" : String(value);
 
 	if (str.length > length) {
 		return str.slice(0, length);
 	}
 
-	return align === "right"
-		? str.padStart(length, padChar)
-		: str.padEnd(length, padChar);
+	return align === "right" ? str.padStart(length, padChar) : str.padEnd(length, padChar);
 }
 
-function buildRecord(
-	fields: Field[],
-	data: Record<string, string | number | undefined>,
-): string {
-	return (
-		fields
-			.map((f) => pad(data[f.name], f.length, f.align, f.pad))
-			.join("") + "\r\n"
-	);
+function buildRecord(fields: Field[], data: Record<string, string | number | undefined>): string {
+	return fields.map((f) => pad(data[f.name], f.length, f.align, f.pad)).join("") + "\r\n";
 }
 
 function write(lines: string[]) {
