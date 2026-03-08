@@ -30,7 +30,7 @@ export const headerRecordSchema = [
 	{ name: "erstellungsdatum", length: 6 },
 	{ name: "schnittstellenversion", length: 6 },
 	{ name: "fehlerstufe", length: 2 },
-	{ name: "durchgeführt_pruefung", length: 2 },
+	{ name: "durchgefuehrte_pruefung", length: 2 },
 	{ name: "bauherren_kurzbezeichnung", length: 12 },
 	{ name: "dokumenten_urheber", length: 12 },
 	{ name: "sprachcode", length: 1 },
@@ -38,7 +38,7 @@ export const headerRecordSchema = [
 	{ name: "dokumenten_code", length: 1 }, // A= Ausmass; B= Ausschreibung; C= Angebot; D= Vertrag; E= Teilrechnung; F= Situationsrechnung
 	{ name: "dokumenten_status", length: 1 }, // A= Entwurf; B= provisorisch gültig; C= gültig; D= Storno
 	{ name: "vergabe_einheit", length: 13 }, // Nr./Code
-	{ name: "hilfsnummerierung", length: 4 }, // z.B. Nachtragsnummer bei Verträgen, Rechnungsnummer innerhalb von Verträgen
+	{ name: "hilfsnummerierung", length: 4, pad: "start", padChar: "0" }, // z.B. Nachtragsnummer bei Verträgen, Rechnungsnummer innerhalb von Verträgen
 	{ name: "datentraeger_nummer", length: 12 },
 	{ name: "dokumentenversion", length: 7 },
 	{ name: "projektidentifikation", length: 11 },
@@ -64,7 +64,7 @@ export const gRecordSchema = [
 	{ name: "variante_in_gruppe", length: 3 },
 	{ name: "verbandskalkulation", length: 6 },
 	{ name: "recordtyp", length: 1 },
-	{ name: "leer1", length: 1 },
+	{ name: "leer2", length: 1 },
 	{ name: "mengenart", length: 1 },
 	{ name: "vorzeichenmenge", length: 1 },
 	{ name: "menge", length: 13 },
@@ -85,13 +85,13 @@ export const closingRecordSchema = [
 	{ name: "erstellungsdatum_export", length: 6 }, // TTMMJJ
 	{ name: "leer1", length: 2 },
 	{ name: "leer2", length: 2 },
-	{ name: "absender_kurzbezeichnung", length: 14 },
+	{ name: "absender_kurzbezeichnung", length: 12 },
 	{ name: "urheber_bezugsdokument", length: 12 },
 	{ name: "leer3", length: 4 },
-	{ name: "anzahl_austauschrecords", length: 13 }, // Inklusive Header + Schlussrecord
+	{ name: "anzahl_austauschrecords", length: 13, pad: "start", padChar: "0" }, // Inklusive Header + Schlussrecord
 	{ name: "leer4", length: 3 },
 	{ name: "fortsetzung", length: 1 }, // + = weiter Datei, - = letzte Datei
-	{ name: "datentraegernummer", length: 12 },
+	{ name: "datentraegernummer", length: 12, pad: "start", padChar: "0" },
 	{ name: "versionbezugsdokument", length: 7 },
 	{ name: "projektidentifikation", length: 11 },
 	{ name: "projektbezeichnung", length: 30 },
@@ -109,10 +109,7 @@ export type RecordType = {
 export type A_Record = {
 	recordart: "A";
 } & {
-	[K in Exclude<
-		(typeof headerRecordSchema)[number]["name"],
-		"recordart"
-	>]: string;
+	[K in Exclude<(typeof headerRecordSchema)[number]["name"], "recordart">]: string;
 };
 
 export type G_Record = { recordart: "G" } & {
@@ -120,10 +117,11 @@ export type G_Record = { recordart: "G" } & {
 };
 
 export type Z_Record = { recordart: "Z" } & {
-	[K in Exclude<
-		(typeof closingRecordSchema)[number]["name"],
-		"recordart"
-	>]: string;
+	[K in Exclude<(typeof closingRecordSchema)[number]["name"], "recordart">]: string;
+};
+
+export type RemoveLeer<T> = {
+	[K in keyof T as K extends `leer${string}` ? never : K]: T[K];
 };
 
 export type AustauschRecord = A_Record | G_Record | Z_Record;

@@ -20,7 +20,7 @@ const filePath = path.join(__dirname, "../public/data/chapters.json");
 fs.mkdirSync(path.dirname(filePath), { recursive: true });
 const stream = fs.createWriteStream(filePath, { flags: "a" });
 stream.write("[\n");
-for (const chapterNr of [113]) {
+for (const chapterNr of [113, 117]) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 

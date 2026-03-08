@@ -4,11 +4,10 @@
 	"main": "index.js",
 	"type": "module",
 	"scripts": {
-		"scrape": "node src/scraper.js",
-		"images": "node src/image_extractor.js",
-		"parse": "node src/parser.js",
-		"debug": "node --inspect-brk src/scraper.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"scrape": "bun src/scraper.js",
+		"images": "bun src/image_extractor.js",
+		"parse": "bun src/parser.js",
+		"debug": "bun --inspect-brk src/scraper.js"
 	},
 	"keywords": [],
 	"author": "",
