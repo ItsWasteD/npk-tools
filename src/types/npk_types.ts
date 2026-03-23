@@ -39,7 +39,7 @@ export const headerRecordSchema = [
 	{ name: "dokumenten_status", length: 1 }, // A= Entwurf; B= provisorisch gültig; C= gültig; D= Storno
 	{ name: "vergabe_einheit", length: 13 }, // Nr./Code
 	{ name: "hilfsnummerierung", length: 4, pad: "start", padChar: "0" }, // z.B. Nachtragsnummer bei Verträgen, Rechnungsnummer innerhalb von Verträgen
-	{ name: "datentraeger_nummer", length: 12 },
+	{ name: "datentraeger_nummer", length: 12, pad: "start", padChar: "0" },
 	{ name: "dokumentenversion", length: 7 },
 	{ name: "projektidentifikation", length: 11 },
 	{ name: "projektbezeichnung", length: 30 },
@@ -109,7 +109,10 @@ export type RecordType = {
 export type A_Record = {
 	recordart: "A";
 } & {
-	[K in Exclude<(typeof headerRecordSchema)[number]["name"], "recordart">]: string;
+	[K in Exclude<
+		(typeof headerRecordSchema)[number]["name"],
+		"recordart"
+	>]: string;
 };
 
 export type G_Record = { recordart: "G" } & {
@@ -117,7 +120,10 @@ export type G_Record = { recordart: "G" } & {
 };
 
 export type Z_Record = { recordart: "Z" } & {
-	[K in Exclude<(typeof closingRecordSchema)[number]["name"], "recordart">]: string;
+	[K in Exclude<
+		(typeof closingRecordSchema)[number]["name"],
+		"recordart"
+	>]: string;
 };
 
 export type RemoveLeer<T> = {

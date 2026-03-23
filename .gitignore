@@ -11,3 +11,5 @@ images/**
 !images/113/*
 
 output.json
+
+*.01S

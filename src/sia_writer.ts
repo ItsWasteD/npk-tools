@@ -1,5 +1,11 @@
 import { writeFileSync } from "fs";
-import { createClosingRecord, createGRecord, createHeaderRecord, formatDate, serializeFile } from "./helpers";
+import {
+	createClosingRecord,
+	createGRecord,
+	createHeaderRecord,
+	formatDate,
+	serializeFile,
+} from "./helpers";
 import type { A_Record, G_Record, Z_Record } from "./types/npk_types";
 
 function write(content: string) {

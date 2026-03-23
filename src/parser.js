@@ -20,7 +20,7 @@ const filePath = path.join(__dirname, "../public/data/chapters.json");
 fs.mkdirSync(path.dirname(filePath), { recursive: true });
 const stream = fs.createWriteStream(filePath, { flags: "a" });
 stream.write("[\n");
-for (const chapterNr of [113, 117]) {
+for (const chapterNr of [113]) {
 	const parsed = parseFile(chapterNr);
 	data.push(parsed);
 
@@ -41,7 +41,9 @@ stream.end();
 function printPositions(positions, level = 1) {
 	const indent = "  ".repeat(level);
 	for (const pos of positions) {
-		console.log(`${indent}${pos.levelcode?.title || ""} ${pos.name.text.title || ""}`);
+		console.log(
+			`${indent}${pos.levelcode?.title || ""} ${pos.name.text.title || ""}`,
+		);
 		if (pos.name.variables && pos.name.variables.length) {
 			for (const v of pos.name.variables) {
 				console.log(`${indent}  ${v.levelcode} - ${v.name}`);
@@ -64,9 +66,15 @@ function parseFile(chapterNr) {
 	 *  HEADER ELEMENT - .npk-chapter-header
 	 * ############################################## */
 
-	const headerLevelCode = chapter.find("> .npk-chapter-header > .npk-position-levelcode");
-	const headerName = chapter.find("> .npk-chapter-header > .npk-position-name");
-	const headerVersion = chapter.find("> .npk-chapter-header > .npk-position-name > .npk-position-version");
+	const headerLevelCode = chapter.find(
+		"> .npk-chapter-header > .npk-position-levelcode",
+	);
+	const headerName = chapter.find(
+		"> .npk-chapter-header > .npk-position-name",
+	);
+	const headerVersion = chapter.find(
+		"> .npk-chapter-header > .npk-position-name > .npk-position-version",
+	);
 
 	const obj = {
 		levelCode: getText(headerLevelCode),
@@ -123,16 +131,22 @@ function parsePositionGroup(positionGroup) {
 		const products = name.find("> .npk-position-products");
 
 		// 1.2.3.1 ITEMS
-		const productItems = products.find("> .npk-position-products-items > .prd-product");
+		const productItems = products.find(
+			"> .npk-position-products-items > .prd-product",
+		);
 
 		// 1.2.4 VARIABLES
-		const variables = name.find("> .npk-position-variables > .npk-position-variable");
+		const variables = name.find(
+			"> .npk-position-variables > .npk-position-variable",
+		);
 
 		positionObj.name = {
 			text: {
 				title: getText(text, "> .title"),
 				...(body.length && { body: getText(body) }),
-				...(textItems.length && { items: textItems.map((i, el) => getText($(el))).get() }),
+				...(textItems.length && {
+					items: textItems.map((i, el) => getText($(el))).get(),
+				}),
 			},
 			...(description.length && {
 				description: {
@@ -178,7 +192,10 @@ function parsePositionGroup(positionGroup) {
 
 		mediaItems.length &&
 			(positionObj.media = mediaItems
-				.map((i, el) => $(el).find("> img").attr("src").match(IMAGE_REGEXP)[1])
+				.map(
+					(i, el) =>
+						$(el).find("> img").attr("src").match(IMAGE_REGEXP)[1],
+				)
 				.get());
 
 		//2. POSITIONGROUP
