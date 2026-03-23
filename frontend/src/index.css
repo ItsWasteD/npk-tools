@@ -32,10 +32,14 @@ h1 {
 }
 
 .npk-node {
+	padding-left: 6px;
 	background-color: #242424;
+}
+
+.npk-node:focus {
+	outline: none;
 }
 
 .npk-node:focus > :first-child {
 	background-color: darkblue !important;
-	outline: none;
 }
