@@ -1,8 +1,12 @@
 import React from "react";
 import { useFilter } from "../contexts/FilterContext";
 import type { NpkPosition, NpkRoot } from "../types/npk.types";
+import { useCatalog, type SelectedItem } from "../contexts/CatalogContext";
 
-const productsEnabled = false;
+const settings = {
+	productsHidden: true,
+	groupHidden: true,
+};
 
 function NpkRootNode({ node }: { node: NpkRoot }) {
 	return (
@@ -11,7 +15,11 @@ function NpkRootNode({ node }: { node: NpkRoot }) {
 				{node.levelCode} - {node.name}
 			</h2>
 			{node.positions.map((pos, i) => (
-				<NpkPositionNode key={pos.levelcode ?? i} node={pos} level={0} />
+				<NpkPositionNode
+					key={pos.levelcode ?? i}
+					node={pos}
+					level={0}
+				/>
 			))}
 		</div>
 	);
@@ -20,11 +28,38 @@ function NpkRootNode({ node }: { node: NpkRoot }) {
 const NpkPositionNode = React.memo(function NpkPositionNode({
 	node,
 	level = 0,
+	parents = [],
 }: {
 	node: NpkPosition;
 	level?: number;
+	parents?: NpkPosition[];
 }) {
 	const { filteredLevel } = useFilter();
+	const {
+		selectedItems,
+		toggleSelection,
+		clearSelection,
+		isItemOrParentSelected,
+	} = useCatalog();
+
+	const isSelected = isItemOrParentSelected(node.levelcode);
+
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			const selectedItem: SelectedItem = {
+				levelcode: node.levelcode,
+				name: node.name.text.title || "",
+				type: "position",
+				parents,
+				item: node,
+			};
+			toggleSelection(selectedItem);
+		} else if (e.key === "Escape") {
+			e.preventDefault();
+			clearSelection();
+		}
+	};
 
 	if (filteredLevel && level >= filteredLevel) return null;
 
@@ -34,9 +69,21 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 	const hasPositions = (node.positions?.length ?? 0) > 0;
 
 	return (
-		<div tabIndex={0} className={`npk-node fs-6 border ${level !== 0 ? "ms-3" : ""}`}>
+		<div
+			tabIndex={0}
+			onKeyDown={handleKeyDown}
+			className={`npk-node fs-6 border ${level !== 0 ? "ms-3" : ""} ${
+				isSelected ? "npk-node-selected" : ""
+			}`}
+		>
 			<div>
-				<div style={level < 4 ? { fontWeight: "bold" } : { fontWeight: "normal" }}>
+				<div
+					style={
+						level < 4
+							? { fontWeight: "bold" }
+							: { fontWeight: "normal" }
+					}
+				>
 					{title}
 					{nameNode.text.title && <> - {nameNode.text.title}</>}
 				</div>
@@ -53,10 +100,11 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 				</div>
 				{nameNode.description?.label && (
 					<div>
-						{nameNode.description?.label} - {nameNode.description?.content}
+						{nameNode.description?.label} -{" "}
+						{nameNode.description?.content}
 					</div>
 				)}
-				{productsEnabled && nameNode.products && (
+				{!settings.productsHidden && nameNode.products && (
 					<div>
 						{nameNode.products.map((prod, _i) => (
 							<>
@@ -73,7 +121,9 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 								{el.levelcode}
 								{el.name && <>-{el.name}</>}
 								{el.eco && <>-{el.eco}</>}
-								{el.group && <>-{el.group}</>}
+								{!settings.groupHidden && el.group && (
+									<>-{el.group}</>
+								)}
 								{el.products && <>-{el.products}</>}
 							</div>
 						))}
@@ -86,7 +136,12 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 
 			{hasPositions &&
 				node.positions!.map((child: NpkPosition, idx: number) => (
-					<NpkPositionNode key={`${child.levelcode}-${idx}`} node={child} level={level + 1} />
+					<NpkPositionNode
+						key={`${child.levelcode}-${idx}`}
+						node={child}
+						level={level + 1}
+						parents={[...parents, node]}
+					/>
 				))}
 		</div>
 	);
@@ -101,5 +156,13 @@ export default function NpkChapter(props: NpkChapterProps) {
 	const level = props.level ?? 0;
 	const node = props.node;
 
-	return <>{level === 0 ? <NpkRootNode node={node as NpkRoot} /> : <NpkPositionNode node={node as NpkPosition} />}</>;
+	return (
+		<>
+			{level === 0 ? (
+				<NpkRootNode node={node as NpkRoot} />
+			) : (
+				<NpkPositionNode node={node as NpkPosition} />
+			)}
+		</>
+	);
 }
