@@ -30,3 +30,12 @@ h1 {
 		background-color: #ffffff;
 	}
 }
+
+.npk-node {
+	background-color: #242424;
+}
+
+.npk-node:focus > :first-child {
+	background-color: darkblue !important;
+	outline: none;
+}

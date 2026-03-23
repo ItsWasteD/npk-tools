@@ -5,15 +5,13 @@ import type { NpkPosition, NpkRoot } from "../types/npk.types";
 const productsEnabled = false;
 
 function NpkRootNode({ node }: { node: NpkRoot }) {
-	const { filteredLevel } = useFilter();
-
 	return (
 		<div>
 			<h2>
 				{node.levelCode} - {node.name}
 			</h2>
 			{node.positions.map((pos, i) => (
-				<NpkPositionNode key={i} node={pos} level={0} filteredLevel={filteredLevel} />
+				<NpkPositionNode key={pos.levelcode ?? i} node={pos} level={0} />
 			))}
 		</div>
 	);
@@ -22,15 +20,13 @@ function NpkRootNode({ node }: { node: NpkRoot }) {
 const NpkPositionNode = React.memo(function NpkPositionNode({
 	node,
 	level = 0,
-	filteredLevel,
 }: {
 	node: NpkPosition;
 	level?: number;
-	filteredLevel?: number;
 }) {
-	if (filteredLevel && level >= filteredLevel) {
-		return null;
-	}
+	const { filteredLevel } = useFilter();
+
+	if (filteredLevel && level >= filteredLevel) return null;
 
 	const title = node.levelcode;
 	const nameNode = node.name;
@@ -38,15 +34,15 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 	const hasPositions = (node.positions?.length ?? 0) > 0;
 
 	return (
-		<div tabIndex={0} className={`fs-6 border ${level !== 0 ? "ms-3" : ""}`}>
+		<div tabIndex={0} className={`npk-node fs-6 border ${level !== 0 ? "ms-3" : ""}`}>
 			<div>
 				<div style={level < 4 ? { fontWeight: "bold" } : { fontWeight: "normal" }}>
 					{title}
 					{nameNode.text.title && <> - {nameNode.text.title}</>}
 				</div>
-				<div style={{ backgroundColor: "green" }}>
+				<div>
 					{nameNode.text.body}
-					<div style={{ backgroundColor: "orange" }}>
+					<div>
 						{nameNode.text.items?.map((it, i) => (
 							<div key={i}>
 								<i>{it}</i>
@@ -56,12 +52,12 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 					</div>
 				</div>
 				{nameNode.description?.label && (
-					<div style={{ backgroundColor: "blue" }}>
+					<div>
 						{nameNode.description?.label} - {nameNode.description?.content}
 					</div>
 				)}
 				{productsEnabled && nameNode.products && (
-					<div style={{ backgroundColor: "red" }}>
+					<div>
 						{nameNode.products.map((prod, _i) => (
 							<>
 								{prod.label}
@@ -75,27 +71,22 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 						{nameNode.variables.map((el, i) => (
 							<div key={i}>
 								{el.levelcode}
-								{el.name?.trim() && <>-{el.name}</>}
-								{el.eco?.trim() && <>-{el.eco}</>}
-								{el.group?.trim() && <>-{el.group}</>}
-								{el.products?.trim() && <>-{el.products}</>}
+								{el.name && <>-{el.name}</>}
+								{el.eco && <>-{el.eco}</>}
+								{el.group && <>-{el.group}</>}
+								{el.products && <>-{el.products}</>}
 							</div>
 						))}
 					</div>
 				)}
-				{node.unit && <div style={{ backgroundColor: "lightgray" }}>{node.unit}</div>}
-				{node.eco && <div style={{ backgroundColor: "black" }}>{node.eco.text}</div>}
+				{node.unit && <div>{node.unit}</div>}
+				{node.eco && <div>{node.eco.text}</div>}
 				{/* TODO: Media node.media */}
 			</div>
 
 			{hasPositions &&
 				node.positions!.map((child: NpkPosition, idx: number) => (
-					<NpkPositionNode
-						key={`${child.levelcode}-${idx}`}
-						node={child}
-						level={level + 1}
-						filteredLevel={filteredLevel}
-					/>
+					<NpkPositionNode key={`${child.levelcode}-${idx}`} node={child} level={level + 1} />
 				))}
 		</div>
 	);

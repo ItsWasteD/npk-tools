@@ -1,8 +1,10 @@
 import React from "react";
 import { useFilter } from "../contexts/FilterContext";
+import { useCatalog } from "../contexts/CatalogContext";
 
 export default function ChapterFilter() {
-	const { viewCatalog, setViewCatalog, filteredLevel, setFilteredLevel } = useFilter();
+	const { viewCatalog, setViewCatalog } = useCatalog();
+	const { filteredLevel, setFilteredLevel } = useFilter();
 
 	return (
 		<>
