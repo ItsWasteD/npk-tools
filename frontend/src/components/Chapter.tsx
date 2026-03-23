@@ -3,9 +3,10 @@ import { useParams } from "react-router";
 import NpkChapter from "./NpkChapter";
 import ChapterFilter from "./ChapterFilter";
 import { FilterProvider, useFilter } from "../contexts/FilterContext";
-import { CatalogProvider } from "../contexts/CatalogContext";
+import { CatalogProvider, useCatalog } from "../contexts/CatalogContext";
 import type { NpkRoot } from "../types/npk.types";
 import { filterRootNode, trimVariablesInRoot } from "../utils/npk";
+import CatalogTable from "./CatalogTable";
 
 function FilteredNpkChapters({ data }: { data: NpkRoot[] }) {
 	const { filteredLevel } = useFilter();
@@ -24,6 +25,16 @@ function FilteredNpkChapters({ data }: { data: NpkRoot[] }) {
 	);
 }
 
+function ChapterContent({ data }: { data: NpkRoot[] }) {
+	const { viewCatalog } = useCatalog();
+
+	return viewCatalog ? (
+		<FilteredNpkChapters data={data} />
+	) : (
+		<CatalogTable data={data} />
+	);
+}
+
 export default function Chapter() {
 	const params = useParams();
 	const [data, setData] = useState<NpkRoot[]>([]);
@@ -33,7 +44,9 @@ export default function Chapter() {
 		fetch("/npk-tools/data.json")
 			.then((res) => res.json())
 			.then((json) => {
-				const chapter = json.filter((el: any) => el.levelCode == params.cid);
+				const chapter = json.filter(
+					(el: any) => el.levelCode == params.cid,
+				);
 
 				chapter.forEach(trimVariablesInRoot);
 
@@ -49,7 +62,7 @@ export default function Chapter() {
 			<FilterProvider>
 				<main className="mx-auto border border-secondary p-3 mt-5">
 					<ChapterFilter />
-					<FilteredNpkChapters data={data} />
+					<ChapterContent data={data} />
 				</main>
 			</FilterProvider>
 		</CatalogProvider>

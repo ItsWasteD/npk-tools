@@ -33,6 +33,7 @@ h1 {
 
 .npk-node {
 	background-color: #242424;
+	border-collapse: collapse;
 }
 
 .npk-node:focus {
@@ -45,5 +46,4 @@ h1 {
 
 .npk-node-selected {
 	background-color: #1a472a !important;
-	border: 2px solid #4ade80 !important;
 }
