@@ -8,8 +8,7 @@ function CatalogTable({ data }: { data: NpkRoot[] }) {
 	if (selectedItems.length === 0) {
 		return (
 			<div className="alert alert-info">
-				No items selected. Use Enter to select positions in the tree
-				view.
+				Keine Positionen ausgewählt. Benutze "Enter" um eine Position hinzuzufügen.
 			</div>
 		);
 	}
@@ -21,9 +20,7 @@ function CatalogTable({ data }: { data: NpkRoot[] }) {
 
 		// Recursively filter children
 		const filteredChildren = node.positions
-			? node.positions
-					.map(filterSelectedTree)
-					.filter((child): child is NpkPosition => child !== null)
+			? node.positions.map(filterSelectedTree).filter((child): child is NpkPosition => child !== null)
 			: [];
 
 		// Include this node if it's selected or has selected children
@@ -39,14 +36,11 @@ function CatalogTable({ data }: { data: NpkRoot[] }) {
 
 	const filteredData = data.map((root) => ({
 		...root,
-		positions: root.positions
-			.map(filterSelectedTree)
-			.filter((pos): pos is NpkPosition => pos !== null),
+		positions: root.positions.map(filterSelectedTree).filter((pos): pos is NpkPosition => pos !== null),
 	}));
 
 	return (
 		<div>
-			<h3>Selected Catalog Items</h3>
 			{filteredData.map((rootNode, idx) => (
 				<NpkChapter key={idx} node={rootNode} />
 			))}

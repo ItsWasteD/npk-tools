@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState, useTransition } from "react";
 import type { NpkPosition, NpkVariable } from "../types/npk.types";
 
 // Represents a selected position or variable (direct selections only, not parents)
@@ -18,6 +18,7 @@ type CatalogContextType = {
 	toggleSelection: (item: SelectedItem) => void;
 	clearSelection: () => void;
 	isItemOrParentSelected: (levelcode: string) => boolean;
+	isPending: boolean;
 };
 
 const CatalogContext = createContext<CatalogContextType | null>(null);
@@ -31,22 +32,18 @@ export function useCatalog() {
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
 	const [viewCatalog, setViewCatalog] = useState(true);
 	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+	const [isPending, startTransition] = useTransition();
+
+	const handleSetViewCatalog = (v: boolean) => {
+		startTransition(() => setViewCatalog(v));
+	};
 
 	const toggleSelection = (item: SelectedItem) => {
 		setSelectedItems((prev) => {
-			const isSelected = prev.some(
-				(si) =>
-					si.levelcode === item.levelcode && si.type === item.type,
-			);
+			const isSelected = prev.some((si) => si.levelcode === item.levelcode && si.type === item.type);
 
 			if (isSelected) {
-				return prev.filter(
-					(si) =>
-						!(
-							si.levelcode === item.levelcode &&
-							si.type === item.type
-						),
-				);
+				return prev.filter((si) => !(si.levelcode === item.levelcode && si.type === item.type));
 			} else {
 				return [...prev, item];
 			}
@@ -80,19 +77,16 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 	const value = useMemo(
 		() => ({
 			viewCatalog,
-			setViewCatalog,
+			setViewCatalog: handleSetViewCatalog,
 			selectedItems,
 			selectedLevelcodes,
 			toggleSelection,
 			clearSelection,
 			isItemOrParentSelected,
+			isPending,
 		}),
-		[viewCatalog, selectedItems, selectedLevelcodes],
+		[viewCatalog, selectedItems, selectedLevelcodes, isPending],
 	);
 
-	return (
-		<CatalogContext.Provider value={value}>
-			{children}
-		</CatalogContext.Provider>
-	);
+	return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }

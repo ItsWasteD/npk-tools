@@ -1,22 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useNavigate } from "react-router";
+import Spinner from "./Spinner";
 
 export default function Table() {
 	const navigate = useNavigate();
 
 	const [chapters, setChapters] = useState<any[]>([]);
+	const [isPending, startTransition] = useTransition();
 
 	useEffect(() => {
 		fetch("/npk-tools/data.json")
 			.then((res) => res.json())
-			.then(setChapters);
+			.then((data) => startTransition(() => setChapters(data)));
 	}, []);
 
+	if (isPending) return <Spinner message="Loading chapters..." />;
+
 	const chaptersView = chapters.map((c) => (
-		<tr
-			key={c.levelCode}
-			onClick={() => navigate(`/chapters/${c.levelCode}`)}
-		>
+		<tr key={c.levelCode} onClick={() => navigate(`/chapters/${c.levelCode}`)}>
 			<td>{c.levelCode}</td>
 			<td>{c.name}</td>
 		</tr>
