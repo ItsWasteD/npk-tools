@@ -1,5 +1,5 @@
 import { useEffect, useState, useTransition } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
 
 export default function Table() {

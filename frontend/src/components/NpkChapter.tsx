@@ -8,6 +8,15 @@ const settings = {
 	groupHidden: true,
 };
 
+function getVariableId(parents: NpkPosition[], node: NpkPosition, variableLevelcode: string) {
+	const path = [...parents, node].map((pos) => pos.levelcode).join("/");
+	return `variable:${path}:${variableLevelcode}`;
+}
+
+function getPositionId(levelcode: string) {
+	return `position:${levelcode}`;
+}
+
 function NpkRootNode({ node }: { node: NpkRoot }) {
 	return (
 		<div>
@@ -31,14 +40,17 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 	parents?: NpkPosition[];
 }) {
 	const { filteredLevel } = useFilter();
-	const { toggleSelection, clearSelection, isItemOrParentSelected } = useCatalog();
+	const { viewCatalog, toggleSelection, clearSelection, isItemOrParentSelected, isItemSelected } = useCatalog();
 
-	const isSelected = isItemOrParentSelected(node.levelcode);
+	const isSelected = viewCatalog
+		? isItemSelected(getPositionId(node.levelcode))
+		: isItemOrParentSelected(node.levelcode);
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
 			const selectedItem: SelectedItem = {
+				id: getPositionId(node.levelcode),
 				levelcode: node.levelcode,
 				name: node.name.text.title || "",
 				type: "position",
@@ -98,18 +110,59 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 				)}
 				{nameNode.variables && (
 					<div>
-						{nameNode.variables.map((el, i) => (
-							<div key={i}>
-								{el.levelcode}
-								{el.name && <>-{el.name}</>}
-								{el.eco && <>-{el.eco}</>}
-								{!settings.groupHidden && el.group && <>-{el.group}</>}
-								{el.products && <>-{el.products}</>}
-							</div>
-						))}
+						{nameNode.variables.map((el) => {
+							const varId = getVariableId(parents, node, el.levelcode);
+							const isVarSelected = isItemSelected(varId);
+							const shouldRenderVariable = viewCatalog || isVarSelected;
+							if (!shouldRenderVariable) return null;
+							return (
+								<div
+									key={varId}
+									tabIndex={0}
+									onKeyDown={(e) => {
+										e.stopPropagation();
+										if (e.key === "Enter") {
+											e.preventDefault();
+											const selectedItem: SelectedItem = {
+												id: varId,
+												levelcode: el.levelcode,
+												name: el.name || "",
+												type: "variable",
+												parents: [...parents, node],
+												item: el,
+											};
+											toggleSelection(selectedItem);
+										} else if (e.key === "Escape") {
+											e.preventDefault();
+											clearSelection();
+										}
+									}}
+									onClick={(e) => e.stopPropagation()}
+									className={`npk-variable ${isVarSelected ? "npk-node-selected" : ""}`}
+								>
+									{el.levelcode}
+									{el.name && <> : {el.name}</>}
+									{el.eco && <>-{el.eco}</>}
+									{!settings.groupHidden && el.group && <> : {el.group}</>}
+									{!settings.productsHidden && el.products && <> : {el.products}</>}
+								</div>
+							);
+						})}
 					</div>
 				)}
-				{node.unit && <div>{node.unit}</div>}
+				{node.unit && (
+					<div
+						tabIndex={0}
+						onKeyDown={(e) => {
+							e.stopPropagation();
+							handleKeyDown(e);
+						}}
+						onClick={(e) => e.stopPropagation()}
+						className="npk-unit"
+					>
+						{node.unit}
+					</div>
+				)}
 				{node.eco && <div>{node.eco.text}</div>}
 				{/* TODO: Media node.media */}
 			</div>

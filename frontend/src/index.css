@@ -47,3 +47,19 @@ h1 {
 .npk-node-selected {
 	background-color: #1a472a !important;
 }
+
+.npk-variable {
+	background-color: #242424;
+}
+
+.npk-variable:focus,
+.npk-unit:focus {
+	outline: none;
+	background-color: darkblue !important;
+}
+
+.npk-unit {
+	background-color: #242424;
+	display: inline-block;
+	padding: 0.125rem 0.25rem;
+}

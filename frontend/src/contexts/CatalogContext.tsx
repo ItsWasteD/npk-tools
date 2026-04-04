@@ -3,6 +3,7 @@ import type { NpkPosition, NpkVariable } from "../types/npk.types";
 
 // Represents a selected position or variable (direct selections only, not parents)
 export type SelectedItem = {
+	id: string;
 	levelcode: string;
 	name: string;
 	type: "position" | "variable";
@@ -14,10 +15,12 @@ type CatalogContextType = {
 	viewCatalog: boolean;
 	setViewCatalog: (b: boolean) => void;
 	selectedItems: SelectedItem[];
-	selectedLevelcodes: Set<string>; // Fast O(1) lookup by levelcode
+	selectedItemIds: Set<string>;
+	selectedLevelcodes: Set<string>; // Fast O(1) lookup by position levelcode
 	toggleSelection: (item: SelectedItem) => void;
 	clearSelection: () => void;
 	isItemOrParentSelected: (levelcode: string) => boolean;
+	isItemSelected: (id: string) => boolean;
 	isPending: boolean;
 };
 
@@ -40,13 +43,13 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
 	const toggleSelection = (item: SelectedItem) => {
 		setSelectedItems((prev) => {
-			const isSelected = prev.some((si) => si.levelcode === item.levelcode && si.type === item.type);
+			const isSelected = prev.some((si) => si.id === item.id);
 
 			if (isSelected) {
-				return prev.filter((si) => !(si.levelcode === item.levelcode && si.type === item.type));
-			} else {
-				return [...prev, item];
+				return prev.filter((si) => si.id !== item.id);
 			}
+
+			return [...prev, item];
 		});
 	};
 
@@ -55,13 +58,13 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	// Build Set of selected levelcodes for O(1) lookup
-	// Include selected items AND all their parents in the set
+	// Include selected positions and all parents of selected items
 	const selectedLevelcodes = useMemo(() => {
 		const codes = new Set<string>();
 		selectedItems.forEach((si) => {
-			// Add the selected item itself
-			codes.add(si.levelcode);
-			// Add all its parents
+			if (si.type === "position") {
+				codes.add(si.levelcode);
+			}
 			si.parents.forEach((parent) => {
 				codes.add(parent.levelcode);
 			});
@@ -74,18 +77,28 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		return selectedLevelcodes.has(levelcode);
 	};
 
+	const selectedItemIds = useMemo(() => {
+		return new Set(selectedItems.map((si) => si.id));
+	}, [selectedItems]);
+
+	const isItemSelected = (id: string): boolean => {
+		return selectedItemIds.has(id);
+	};
+
 	const value = useMemo(
 		() => ({
 			viewCatalog,
 			setViewCatalog: handleSetViewCatalog,
 			selectedItems,
+			selectedItemIds,
 			selectedLevelcodes,
 			toggleSelection,
 			clearSelection,
 			isItemOrParentSelected,
+			isItemSelected,
 			isPending,
 		}),
-		[viewCatalog, selectedItems, selectedLevelcodes, isPending],
+		[viewCatalog, selectedItems, selectedItemIds, selectedLevelcodes, isPending],
 	);
 
 	return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useParams } from "react-router-dom";
 import NpkChapter from "./NpkChapter";
 import ChapterFilter from "./ChapterFilter";
 import { FilterProvider, useFilter } from "../contexts/FilterContext";
@@ -8,6 +8,7 @@ import type { NpkRoot } from "../types/npk.types";
 import { filterRootNode, trimVariablesInRoot } from "../utils/npk";
 import CatalogTable from "./CatalogTable";
 import Spinner from "./Spinner";
+import Export from "./Export";
 
 function FilteredNpkChapters({ data }: { data: NpkRoot[] }) {
 	const { filteredLevel, isPending } = useFilter();
@@ -64,7 +65,10 @@ export default function Chapter() {
 		<CatalogProvider>
 			<FilterProvider>
 				<main className="mx-auto p-3 mt-3">
-					<ChapterFilter />
+					<div className="d-flex justify-content-between">
+						<ChapterFilter />
+						<Export />
+					</div>
 					<ChapterContent data={data} />
 				</main>
 			</FilterProvider>
