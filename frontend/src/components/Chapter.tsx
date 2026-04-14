@@ -10,12 +10,12 @@ import CatalogTable from "./CatalogTable";
 import Spinner from "./Spinner";
 import Export from "./Export";
 
-function FilteredNpkChapters({ data }: { data: NpkRoot[] }) {
+function FilteredNpkChapters({ data }: { data: NpkRoot }) {
 	const { filteredLevel, isPending } = useFilter();
 
 	const filteredData = useMemo(() => {
 		if (!data) return;
-		return data.map((root) => filterRootNode(root, filteredLevel));
+		return filterRootNode(data, filteredLevel);
 	}, [data, filteredLevel]);
 
 	if (isPending) {
@@ -24,35 +24,35 @@ function FilteredNpkChapters({ data }: { data: NpkRoot[] }) {
 
 	return (
 		<>
-			{filteredData?.map((rootNode, idx) => (
-				<NpkChapter key={idx} node={rootNode} />
-			))}
+			<NpkChapter node={filteredData!} />
 		</>
 	);
 }
 
-function ChapterContent({ data }: { data: NpkRoot[] }) {
+function ChapterContent({ data }: { data: NpkRoot }) {
 	const { viewCatalog, isPending } = useCatalog();
 
 	if (isPending) {
 		return <Spinner message="Loading catalog..." />;
 	}
 
-	return viewCatalog ? <FilteredNpkChapters data={data} /> : <CatalogTable data={data} />;
+	return viewCatalog ? (
+		<FilteredNpkChapters data={data} />
+	) : (
+		<CatalogTable data={data} />
+	);
 }
 
 export default function Chapter() {
 	const params = useParams();
-	const [data, setData] = useState<NpkRoot[]>([]);
+	const [data, setData] = useState<NpkRoot>();
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		fetch("/npk-tools/data.json")
+		fetch(`/npk-tools/${params.cid}.json`)
 			.then((res) => res.json())
-			.then((json) => {
-				const chapter = json.filter((el: any) => el.levelCode == params.cid);
-
-				chapter.forEach(trimVariablesInRoot);
+			.then((chapter) => {
+				trimVariablesInRoot(chapter);
 
 				setData(chapter);
 				setLoading(false);
@@ -69,7 +69,7 @@ export default function Chapter() {
 						<ChapterFilter />
 						<Export />
 					</div>
-					<ChapterContent data={data} />
+					<ChapterContent data={data!} />
 				</main>
 			</FilterProvider>
 		</CatalogProvider>

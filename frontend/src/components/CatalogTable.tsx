@@ -2,13 +2,14 @@ import { useCatalog } from "../contexts/CatalogContext";
 import NpkChapter from "./NpkChapter";
 import type { NpkPosition, NpkRoot } from "../types/npk.types";
 
-function CatalogTable({ data }: { data: NpkRoot[] }) {
+function CatalogTable({ data }: { data: NpkRoot }) {
 	const { selectedItems, selectedLevelcodes } = useCatalog();
 
 	if (selectedItems.length === 0) {
 		return (
 			<div className="alert alert-info">
-				Keine Positionen ausgewählt. Benutze "Enter" um eine Position hinzuzufügen.
+				Keine Positionen ausgewählt. Benutze "Enter" um eine Position
+				hinzuzufügen.
 			</div>
 		);
 	}
@@ -20,7 +21,9 @@ function CatalogTable({ data }: { data: NpkRoot[] }) {
 
 		// Recursively filter children
 		const filteredChildren = node.positions
-			? node.positions.map(filterSelectedTree).filter((child): child is NpkPosition => child !== null)
+			? node.positions
+					.map(filterSelectedTree)
+					.filter((child): child is NpkPosition => child !== null)
 			: [];
 
 		// Include this node if it's selected or has selected children
@@ -34,16 +37,16 @@ function CatalogTable({ data }: { data: NpkRoot[] }) {
 		return null;
 	};
 
-	const filteredData = data.map((root) => ({
-		...root,
-		positions: root.positions.map(filterSelectedTree).filter((pos): pos is NpkPosition => pos !== null),
-	}));
+	const filteredData = {
+		...data,
+		positions: data.positions
+			.map(filterSelectedTree)
+			.filter((pos): pos is NpkPosition => pos !== null),
+	};
 
 	return (
 		<div>
-			{filteredData.map((rootNode, idx) => (
-				<NpkChapter key={idx} node={rootNode} />
-			))}
+			<NpkChapter key={0} node={filteredData} />
 		</div>
 	);
 }

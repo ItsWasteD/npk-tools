@@ -8,7 +8,11 @@ const settings = {
 	groupHidden: true,
 };
 
-function getVariableId(parents: NpkPosition[], node: NpkPosition, variableLevelcode: string) {
+function getVariableId(
+	parents: NpkPosition[],
+	node: NpkPosition,
+	variableLevelcode: string,
+) {
 	const path = [...parents, node].map((pos) => pos.levelcode).join("/");
 	return `variable:${path}:${variableLevelcode}`;
 }
@@ -24,7 +28,11 @@ function NpkRootNode({ node }: { node: NpkRoot }) {
 				{node.levelCode} - {node.name}
 			</h2>
 			{node.positions.map((pos, i) => (
-				<NpkPositionNode key={pos.levelcode ?? i} node={pos} level={0} />
+				<NpkPositionNode
+					key={pos.levelcode ?? i}
+					node={pos}
+					level={0}
+				/>
 			))}
 		</div>
 	);
@@ -40,7 +48,13 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 	parents?: NpkPosition[];
 }) {
 	const { filteredLevel } = useFilter();
-	const { viewCatalog, toggleSelection, clearSelection, isItemOrParentSelected, isItemSelected } = useCatalog();
+	const {
+		viewCatalog,
+		toggleSelection,
+		clearSelection,
+		isItemOrParentSelected,
+		isItemSelected,
+	} = useCatalog();
 
 	const isSelected = viewCatalog
 		? isItemSelected(getPositionId(node.levelcode))
@@ -78,7 +92,13 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 			className={`npk-node fs-6 border ${level !== 0 ? "ms-3" : ""} ${isSelected ? "npk-node-selected" : ""}`}
 		>
 			<div>
-				<div style={level < 4 ? { fontWeight: "bold" } : { fontWeight: "normal" }}>
+				<div
+					style={
+						level < 4
+							? { fontWeight: "bold" }
+							: { fontWeight: "normal" }
+					}
+				>
 					{title}
 					{nameNode.text.title && <> - {nameNode.text.title}</>}
 				</div>
@@ -95,7 +115,8 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 				</div>
 				{nameNode.description?.label && (
 					<div>
-						{nameNode.description?.label} - {nameNode.description?.content}
+						{nameNode.description?.label} -{" "}
+						{nameNode.description?.content}
 					</div>
 				)}
 				{!settings.productsHidden && nameNode.products && (
@@ -111,9 +132,14 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 				{nameNode.variables && (
 					<div>
 						{nameNode.variables.map((el) => {
-							const varId = getVariableId(parents, node, el.levelcode);
+							const varId = getVariableId(
+								parents,
+								node,
+								el.levelcode,
+							);
 							const isVarSelected = isItemSelected(varId);
-							const shouldRenderVariable = viewCatalog || isVarSelected;
+							const shouldRenderVariable =
+								viewCatalog || isVarSelected;
 							if (!shouldRenderVariable) return null;
 							return (
 								<div
@@ -143,8 +169,11 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 									{el.levelcode}
 									{el.name && <> : {el.name}</>}
 									{el.eco && <>-{el.eco}</>}
-									{!settings.groupHidden && el.group && <> : {el.group}</>}
-									{!settings.productsHidden && el.products && <> : {el.products}</>}
+									{!settings.groupHidden && el.group && (
+										<> : {el.group}</>
+									)}
+									{!settings.productsHidden &&
+										el.products && <> : {el.products}</>}
 								</div>
 							);
 						})}
@@ -189,5 +218,13 @@ export default function NpkChapter(props: NpkChapterProps) {
 	const level = props.level ?? 0;
 	const node = props.node;
 
-	return <>{level === 0 ? <NpkRootNode node={node as NpkRoot} /> : <NpkPositionNode node={node as NpkPosition} />}</>;
+	return (
+		<>
+			{level === 0 ? (
+				<NpkRootNode node={node as NpkRoot} />
+			) : (
+				<NpkPositionNode node={node as NpkPosition} />
+			)}
+		</>
+	);
 }
