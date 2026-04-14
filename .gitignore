@@ -1,0 +1,15 @@
+node_modules
+
+data/*
+
+!data/102.html
+!data/113.html
+
+images/**
+!images
+!images/113/
+!images/113/*
+
+output.json
+
+*.01S
