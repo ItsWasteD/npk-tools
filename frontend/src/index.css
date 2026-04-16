@@ -3,10 +3,6 @@
 	line-height: 1.5;
 	font-weight: 400;
 
-	color-scheme: light dark;
-	color: rgba(255, 255, 255, 0.87);
-	background-color: #242424;
-
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
@@ -17,6 +13,8 @@ body {
 	margin: 0;
 	min-width: 320px;
 	min-height: 100vh;
+	background-color: var(--bs-body-bg) !important;
+	color: var(--bs-body-color) !important;
 }
 
 h1 {
@@ -24,15 +22,8 @@ h1 {
 	line-height: 1.1;
 }
 
-@media (prefers-color-scheme: light) {
-	:root {
-		color: #213547;
-		background-color: #ffffff;
-	}
-}
-
 .npk-node {
-	background-color: #242424;
+	background-color: var(--bs-body-bg);
 	border-collapse: collapse;
 }
 
@@ -41,21 +32,21 @@ h1 {
 }
 
 .npk-node:focus > :first-child {
-	background-color: darkblue !important;
+	background-color: var(--bs-primary) !important;
 }
 
 .npk-node-selected {
-	background-color: #1a472a !important;
+	background-color: var(--bs-success) !important;
 }
 
 .npk-variable {
-	background-color: #242424;
+	background-color: var(--bs-body-bg);
 }
 
 .npk-variable:focus,
 .npk-unit:focus {
 	outline: none;
-	background-color: darkblue !important;
+	background-color: var(--bs-primary) !important;
 }
 
 .npk-unit {

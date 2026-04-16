@@ -1,0 +1,8 @@
+body {
+	background-color: var(--bs-body-bg) !important;
+	color: var(--bs-body-color) !important;
+}
+
+.form-check-label .bi {
+	color: var(--bs-body-color) !important;
+}

@@ -15,7 +15,7 @@ export default function Table() {
 
 	return (
 		<main className="w-75 mx-auto">
-			<table className="table table-dark table-striped table-bordered table-responsive rounded-3">
+			<table className="table table-striped table-bordered table-responsive rounded-3">
 				<thead>
 					<tr>
 						<th>NPK Kapitel</th>
