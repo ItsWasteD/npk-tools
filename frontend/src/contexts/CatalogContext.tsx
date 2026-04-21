@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, useTransition } from "react";
+import { createContext, useContext, useMemo, useState, useTransition, useEffect } from "react";
 import type { NpkPosition, NpkVariable } from "../types/npk.types";
 
 // Represents a selected position or variable (direct selections only, not parents)
@@ -33,9 +33,49 @@ export function useCatalog() {
 }
 
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
-	const [viewCatalog, setViewCatalog] = useState(true);
-	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+	const [viewCatalog, setViewCatalog] = useState(() => {
+		const savedView = localStorage.getItem("npk-view-catalog");
+		return savedView ? JSON.parse(savedView) : true;
+	});
+	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(() => {
+		const saved = localStorage.getItem("npk-selected-items");
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved);
+				return parsed.map((s: any) => ({
+					...s,
+					parents: s.parents.map((levelcode: string) => ({ levelcode }) as NpkPosition),
+					item: null,
+				}));
+			} catch (e) {
+				console.error("Failed to parse saved selected items", e);
+				return [];
+			}
+		}
+		return [];
+	});
 	const [isPending, startTransition] = useTransition();
+
+	// Save to localStorage when selectedItems changes
+	useEffect(() => {
+		localStorage.setItem(
+			"npk-selected-items",
+			JSON.stringify(
+				selectedItems.map((si) => ({
+					id: si.id,
+					levelcode: si.levelcode,
+					name: si.name,
+					type: si.type,
+					parents: si.parents.map((p) => p.levelcode),
+				})),
+			),
+		);
+	}, [selectedItems]);
+
+	// Save viewCatalog to localStorage
+	useEffect(() => {
+		localStorage.setItem("npk-view-catalog", JSON.stringify(viewCatalog));
+	}, [viewCatalog]);
 
 	const handleSetViewCatalog = (v: boolean) => {
 		startTransition(() => setViewCatalog(v));
