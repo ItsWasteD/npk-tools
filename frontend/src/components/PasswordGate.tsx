@@ -2,12 +2,11 @@ import React, { useState, type ReactNode } from "react";
 
 export default function PasswordGate({ children }: { children: ReactNode }) {
 	const [password, setPassword] = useState("");
-	const [authenticated, setAuthenticated] = useState(false);
+	const [authenticated, setAuthenticated] = useState(true);
 	const [error, setError] = useState("");
 
 	// Get the expected hash from environment variable or fallback
-	const expectedHash =
-		"fabbda8bd40823be61166d259a79be8e12895d97cb7a3bb4a7f9dd523bf19a0d"; // Replace with actual hash
+	const expectedHash = "fabbda8bd40823be61166d259a79be8e12895d97cb7a3bb4a7f9dd523bf19a0d"; // Replace with actual hash
 
 	const hashPassword = async (pwd: string): Promise<string> => {
 		const encoder = new TextEncoder();

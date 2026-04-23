@@ -48,10 +48,8 @@ export default function Export() {
 	}, []);
 
 	return (
-		<div className="">
-			<button type="button" className="btn btn-warning" onClick={exportPdf}>
-				Export als PDF
-			</button>
-		</div>
+		<button type="button" className="btn btn-warning" onClick={exportPdf}>
+			Export als PDF
+		</button>
 	);
 }
