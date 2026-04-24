@@ -43,7 +43,7 @@ function App() {
 					<i className="bi bi-moon ms-2"></i>
 				</div>
 			</nav>
-			<div className="container-fluid" style={{ marginTop: "12vh" }}>
+			<div className="container-fluid pb-5" style={{ marginTop: "4rem" }}>
 				<Routes>
 					<Route index element={<Table />} />
 					<Route path="chapters/:cid" element={<Chapter />} />

@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo, useState, useTransition, useEffect } from "react";
+import {
+	createContext,
+	useContext,
+	useMemo,
+	useState,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+} from "react";
 import type { NpkPosition, NpkVariable } from "../types/npk.types";
 
 // Represents a selected position or variable (direct selections only, not parents)
@@ -17,6 +25,8 @@ type CatalogContextType = {
 	selectedItems: SelectedItem[];
 	selectedItemIds: Set<string>;
 	selectedLevelcodes: Set<string>; // Fast O(1) lookup by position levelcode
+	inputValues: Record<string, string>;
+	setInputValue: (id: string, value: string) => void;
 	toggleSelection: (item: SelectedItem) => void;
 	clearSelection: () => void;
 	isItemOrParentSelected: (levelcode: string) => boolean;
@@ -37,6 +47,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		const savedView = localStorage.getItem("npk-view-catalog");
 		return savedView ? JSON.parse(savedView) : true;
 	});
+
 	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(() => {
 		const saved = localStorage.getItem("npk-selected-items");
 		if (saved) {
@@ -44,7 +55,9 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 				const parsed = JSON.parse(saved);
 				return parsed.map((s: any) => ({
 					...s,
-					parents: s.parents.map((levelcode: string) => ({ levelcode }) as NpkPosition),
+					parents: s.parents.map(
+						(levelcode: string) => ({ levelcode }) as NpkPosition,
+					),
 					item: null,
 				}));
 			} catch (e) {
@@ -54,7 +67,22 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		}
 		return [];
 	});
-	const [isPending, startTransition] = useTransition();
+
+	const [inputValues, setInputValues] = useState<Record<string, string>>(
+		() => {
+			const saved = localStorage.getItem("npk-input-values");
+			if (saved) {
+				try {
+					return JSON.parse(saved);
+				} catch (e) {
+					console.error("Failed to parse saved input values", e);
+				}
+			}
+			return {};
+		},
+	);
+
+	const isPending = false;
 
 	// Save to localStorage when selectedItems changes
 	useEffect(() => {
@@ -72,14 +100,57 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		);
 	}, [selectedItems]);
 
+	useEffect(() => {
+		localStorage.setItem("npk-input-values", JSON.stringify(inputValues));
+	}, [inputValues]);
+
 	// Save viewCatalog to localStorage
 	useEffect(() => {
 		localStorage.setItem("npk-view-catalog", JSON.stringify(viewCatalog));
 	}, [viewCatalog]);
 
-	const handleSetViewCatalog = (v: boolean) => {
-		startTransition(() => setViewCatalog(v));
+	const scrollPositions = useRef<Record<"catalog" | "selected", number>>({
+		catalog: 0,
+		selected: 0,
+	});
+	const hasMounted = useRef(false);
+
+	const getScrollTop = () => {
+		const scrollingElement = document.scrollingElement;
+		return scrollingElement ? scrollingElement.scrollTop : window.scrollY;
 	};
+
+	const scrollToTop = (top: number) => {
+		const scrollingElement = (document.scrollingElement ??
+			document.documentElement) as HTMLElement;
+		const previousScrollBehavior = scrollingElement.style.scrollBehavior;
+		scrollingElement.style.scrollBehavior = "auto";
+		window.scrollTo(0, top);
+		scrollingElement.style.scrollBehavior = previousScrollBehavior;
+	};
+
+	const handleSetViewCatalog = (v: boolean) => {
+		scrollPositions.current[viewCatalog ? "catalog" : "selected"] =
+			getScrollTop();
+		setViewCatalog(v);
+	};
+
+	useLayoutEffect(() => {
+		if (!hasMounted.current) {
+			hasMounted.current = true;
+			return;
+		}
+
+		const key = viewCatalog ? "catalog" : "selected";
+		const pos = scrollPositions.current[key];
+		if (typeof pos === "number") {
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					scrollToTop(pos);
+				});
+			});
+		}
+	}, [viewCatalog]);
 
 	const toggleSelection = (item: SelectedItem) => {
 		setSelectedItems((prev) => {
@@ -125,6 +196,13 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		return selectedItemIds.has(id);
 	};
 
+	const setInputValue = (id: string, value: string) => {
+		setInputValues((prev) => ({
+			...prev,
+			[id]: value,
+		}));
+	};
+
 	const value = useMemo(
 		() => ({
 			viewCatalog,
@@ -132,14 +210,27 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 			selectedItems,
 			selectedItemIds,
 			selectedLevelcodes,
+			inputValues,
+			setInputValue,
 			toggleSelection,
 			clearSelection,
 			isItemOrParentSelected,
 			isItemSelected,
 			isPending,
 		}),
-		[viewCatalog, selectedItems, selectedItemIds, selectedLevelcodes, isPending],
+		[
+			viewCatalog,
+			selectedItems,
+			selectedItemIds,
+			selectedLevelcodes,
+			inputValues,
+			isPending,
+		],
 	);
 
-	return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
+	return (
+		<CatalogContext.Provider value={value}>
+			{children}
+		</CatalogContext.Provider>
+	);
 }
