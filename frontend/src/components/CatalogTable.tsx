@@ -3,7 +3,7 @@ import NpkChapter from "./NpkChapter";
 import type { NpkPosition, NpkRoot } from "../types/npk.types";
 
 function CatalogTable({ data }: { data: NpkRoot }) {
-	const { selectedItems, selectedLevelcodes } = useCatalog();
+	const { selectedItems } = useCatalog();
 
 	if (selectedItems.length === 0) {
 		return (
@@ -15,14 +15,33 @@ function CatalogTable({ data }: { data: NpkRoot }) {
 	}
 
 	// Filter the tree to only show branches that contain selected items
-	const filterSelectedTree = (node: NpkPosition): NpkPosition | null => {
+	const selectedPaths = new Set(
+		selectedItems.flatMap((item) => {
+			const path = [
+				...item.parents.map((parent) => parent.levelcode),
+				...(item.type === "position" ? [item.levelcode] : []),
+			];
+			return path.map((_, index) => path.slice(0, index + 1).join("/"));
+		}),
+	);
+
+	const filterSelectedTree = (
+		node: NpkPosition,
+		parents: NpkPosition[] = [],
+	): NpkPosition | null => {
 		// Check if this node or any of its descendants are selected
-		const isSelected = selectedLevelcodes.has(node.levelcode);
+		const path = [
+			...parents.map((parent) => parent.levelcode),
+			node.levelcode,
+		].join("/");
+		const isSelected = selectedPaths.has(path);
 
 		// Recursively filter children
 		const filteredChildren = node.positions
 			? node.positions
-					.map(filterSelectedTree)
+					.map((child) =>
+						filterSelectedTree(child, [...parents, node]),
+					)
 					.filter((child): child is NpkPosition => child !== null)
 			: [];
 
@@ -40,7 +59,7 @@ function CatalogTable({ data }: { data: NpkRoot }) {
 	const filteredData = {
 		...data,
 		positions: data.positions
-			.map(filterSelectedTree)
+			.map((position) => filterSelectedTree(position))
 			.filter((pos): pos is NpkPosition => pos !== null),
 	};
 

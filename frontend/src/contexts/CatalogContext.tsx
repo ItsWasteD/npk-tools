@@ -24,12 +24,12 @@ type CatalogContextType = {
 	setViewCatalog: (b: boolean) => void;
 	selectedItems: SelectedItem[];
 	selectedItemIds: Set<string>;
-	selectedLevelcodes: Set<string>; // Fast O(1) lookup by position levelcode
+	selectedPaths: Set<string>; // Fast O(1) lookup by position path
 	inputValues: Record<string, string>;
 	setInputValue: (id: string, value: string) => void;
 	toggleSelection: (item: SelectedItem) => void;
 	clearSelection: () => void;
-	isItemOrParentSelected: (levelcode: string) => boolean;
+	isItemOrParentSelected: (path: string) => boolean;
 	isItemSelected: (id: string) => boolean;
 	isPending: boolean;
 };
@@ -53,13 +53,26 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		if (saved) {
 			try {
 				const parsed = JSON.parse(saved);
-				return parsed.map((s: any) => ({
-					...s,
-					parents: s.parents.map(
+				return parsed.map((s: any) => {
+					const parents = s.parents.map(
 						(levelcode: string) => ({ levelcode }) as NpkPosition,
-					),
-					item: null,
-				}));
+					);
+					return {
+						...s,
+						id:
+							s.type === "position"
+								? `position:${[
+										...parents.map(
+											(parent: NpkPosition) =>
+												parent.levelcode,
+										),
+										s.levelcode,
+									].join("/")}`
+								: s.id,
+						parents,
+						item: null,
+					};
+				});
 			} catch (e) {
 				console.error("Failed to parse saved selected items", e);
 				return [];
@@ -157,7 +170,26 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 			const isSelected = prev.some((si) => si.id === item.id);
 
 			if (isSelected) {
-				return prev.filter((si) => si.id !== item.id);
+				if (item.type !== "variable") {
+					return prev.filter((si) => si.id !== item.id);
+				}
+
+				const variablePath = item.parents.map(
+					(parent) => parent.levelcode,
+				);
+				return prev.filter((si) => {
+					if (si.id === item.id) return false;
+					if (si.type !== "position") return true;
+
+					const positionPath = [
+						...si.parents.map((parent) => parent.levelcode),
+						si.levelcode,
+					];
+					const isParent = positionPath.every(
+						(levelcode, index) => variablePath[index] === levelcode,
+					);
+					return !isParent;
+				});
 			}
 
 			return [...prev, item];
@@ -168,24 +200,24 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 		setSelectedItems([]);
 	};
 
-	// Build Set of selected levelcodes for O(1) lookup
-	// Include selected positions and all parents of selected items
-	const selectedLevelcodes = useMemo(() => {
-		const codes = new Set<string>();
+	// Build exact position paths so duplicate levelcodes in different branches do not collide.
+	const selectedPaths = useMemo(() => {
+		const paths = new Set<string>();
 		selectedItems.forEach((si) => {
-			if (si.type === "position") {
-				codes.add(si.levelcode);
+			const selectedPath = [
+				...si.parents.map((parent) => parent.levelcode),
+				...(si.type === "position" ? [si.levelcode] : []),
+			];
+			for (let index = 1; index <= selectedPath.length; index++) {
+				paths.add(selectedPath.slice(0, index).join("/"));
 			}
-			si.parents.forEach((parent) => {
-				codes.add(parent.levelcode);
-			});
 		});
-		return codes;
+		return paths;
 	}, [selectedItems]);
 
 	// Check if a node is selected directly OR if it's a parent of a selected node
-	const isItemOrParentSelected = (levelcode: string): boolean => {
-		return selectedLevelcodes.has(levelcode);
+	const isItemOrParentSelected = (path: string): boolean => {
+		return selectedPaths.has(path);
 	};
 
 	const selectedItemIds = useMemo(() => {
@@ -209,7 +241,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 			setViewCatalog: handleSetViewCatalog,
 			selectedItems,
 			selectedItemIds,
-			selectedLevelcodes,
+			selectedPaths,
 			inputValues,
 			setInputValue,
 			toggleSelection,
@@ -222,7 +254,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 			viewCatalog,
 			selectedItems,
 			selectedItemIds,
-			selectedLevelcodes,
+			selectedPaths,
 			inputValues,
 			isPending,
 		],

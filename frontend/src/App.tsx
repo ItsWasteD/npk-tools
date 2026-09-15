@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import Table from "./components/Table";
 import Chapter from "./components/Chapter";
-import PasswordGate from "./components/PasswordGate";
+import PasswordGate from "./components/auth/PasswordGate";
 
 function App() {
 	const [theme, setTheme] = useState<"dark" | "light">(

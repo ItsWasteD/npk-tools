@@ -7,7 +7,7 @@ import { CatalogProvider, useCatalog } from "../contexts/CatalogContext";
 import type { NpkRoot } from "../types/npk.types";
 import { filterRootNode, trimVariablesInRoot } from "../utils/npk";
 import CatalogTable from "./CatalogTable";
-import Spinner from "./Spinner";
+import Spinner from "./util/Spinner";
 
 function FilteredNpkChapters({ data }: { data: NpkRoot }) {
 	const { filteredLevel, isPending } = useFilter();
@@ -35,7 +35,11 @@ function ChapterContent({ data }: { data: NpkRoot }) {
 		return <Spinner message="Loading catalog..." />;
 	}
 
-	return viewCatalog ? <FilteredNpkChapters data={data} /> : <CatalogTable data={data} />;
+	return viewCatalog ? (
+		<FilteredNpkChapters data={data} />
+	) : (
+		<CatalogTable data={data} />
+	);
 }
 
 export default function Chapter() {

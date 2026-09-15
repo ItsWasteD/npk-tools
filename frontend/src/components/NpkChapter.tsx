@@ -17,8 +17,12 @@ function getVariableId(
 	return `variable:${path}:${variableLevelcode}`;
 }
 
-function getPositionId(levelcode: string) {
-	return `position:${levelcode}`;
+function getPositionPath(parents: NpkPosition[], levelcode: string) {
+	return [...parents.map((parent) => parent.levelcode), levelcode].join("/");
+}
+
+function getPositionId(parents: NpkPosition[], levelcode: string) {
+	return `position:${getPositionPath(parents, levelcode)}`;
 }
 
 function NpkRootNode({ node }: { node: NpkRoot }) {
@@ -59,14 +63,14 @@ const NpkPositionNode = React.memo(function NpkPositionNode({
 	} = useCatalog();
 
 	const isSelected = viewCatalog
-		? isItemOrParentSelected(node.levelcode)
+		? isItemOrParentSelected(getPositionPath(parents, node.levelcode))
 		: false;
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
 			const selectedItem: SelectedItem = {
-				id: getPositionId(node.levelcode),
+				id: getPositionId(parents, node.levelcode),
 				levelcode: node.levelcode,
 				name: node.name.text.title || "",
 				type: "position",
