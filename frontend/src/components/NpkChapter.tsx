@@ -261,7 +261,14 @@ function checkInsertInputfield(
 		return (
 			<>
 				{content.replaceAll(/\.+$/g, "")}
-				<input type="text" value={value} onChange={onChange} />
+				<input
+					type="text"
+					placeholder="Menge"
+					value={value}
+					onChange={onChange}
+					onKeyDown={(e) => e.stopPropagation()}
+				/>
+				<span className="npk-paper-lines" aria-hidden="true" />
 			</>
 		);
 	} else {

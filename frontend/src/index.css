@@ -51,6 +51,27 @@ h1 {
 	background-color: var(--bs-body-bg);
 }
 
+.npk-paper-lines {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 1rem;
+	width: 14rem;
+	height: 1rem;
+	margin-left: 0.5rem;
+	margin-right: 1rem;
+	vertical-align: middle;
+	float: right;
+}
+
+.npk-paper-lines::before,
+.npk-paper-lines::after {
+	content: "";
+	display: block;
+	flex: 0 0 6.5rem;
+	border-top: 1px dotted currentColor;
+}
+
 .npk-variable:focus,
 .npk-unit:focus {
 	outline: none;
